@@ -123,8 +123,8 @@ const createInitialAdminData = async() => {
 }
 
 db.mongoose
-// .connect(`mongodb://${dbConfig.HOST}:${dbConfig.PORT}/${dbConfig.DB}`, {
-  .connect(`${dbConfig.URI}`, {
+// .connect(`${dbConfig.URI}`, {
+.connect(`mongodb://${dbConfig.HOST}:${dbConfig.PORT}/${dbConfig.DB}`, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useFindAndModify: false
