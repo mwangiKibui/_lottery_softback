@@ -59,6 +59,10 @@ const userSchema = new mongoose.Schema(
       enum: ["admin", "subAdmin", "superVisor", "seller"],
       required: true
     },
+    superVisorName: {
+      type: String,
+      default: "None",
+    },
   },
   {
     timestamps: true,

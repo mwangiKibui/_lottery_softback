@@ -21,6 +21,27 @@ module.exports = function (app) {
     controller.getLimitBut
   );
 
+  // Read Seller
+  app.get(
+    "/api/subadmin/getlimitbutSeller",
+    [authJwt.verifyToken, authJwt.isSubAdmin],
+    controller.getLimitButSeller
+  );
+
+  // Read supervisor
+  app.get(
+    "/api/subadmin/getlimitbutSuperVisor",
+    [authJwt.verifyToken, authJwt.isSubAdmin],
+    controller.getLimitButSuperVisor
+  );
+
+  // Read Sub Admin
+  app.get(
+    "/api/subadmin/getlimitbutAll",
+    [authJwt.verifyToken, authJwt.isSubAdmin],
+    controller.getLimitButAll
+  );
+
   // Update Sub Admin
   app.patch(
     "/api/subadmin/updatelimitbut/:id",

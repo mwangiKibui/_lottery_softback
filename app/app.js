@@ -25,7 +25,18 @@ const zlib = require('zlib');
 
 const app = express();
 
-app.use(cors({ origin: "http://localhost:3000" }));
+// app.use(cors({ origin:"http://gwtechsoft.com" }));
+const allowedOrigins = ['http://localhost:3000','http://localhost:3001', 'http://gwtechsoft.com'];
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+}));
+
 app.use(express.static("public"));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -112,7 +123,8 @@ const createInitialAdminData = async() => {
 }
 
 db.mongoose
-  .connect(`mongodb://${dbConfig.HOST}:${dbConfig.PORT}/${dbConfig.DB}`, {
+// .connect(`mongodb://${dbConfig.HOST}:${dbConfig.PORT}/${dbConfig.DB}`, {
+  .connect(`${dbConfig.URI}`, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useFindAndModify: false

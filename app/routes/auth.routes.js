@@ -23,3 +23,4 @@ module.exports = function(app) {
 
   app.post("/api/auth/signout", controller.signOut);
 };
+
