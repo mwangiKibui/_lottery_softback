@@ -26,7 +26,7 @@ const zlib = require('zlib');
 const app = express();
 
 // app.use(cors({ origin:"http://gwtechsoft.com" }));
-const allowedOrigins = ['http://localhost:3000','http://localhost:3001', 'http://gwtechsoft.com'];
+const allowedOrigins = ['http://localhost:3000','http://localhost:3001', 'http://gwtechsoft.com', 'http://204.12.203.235'];
 app.use(cors({
   origin: (origin, callback) => {
     if (!origin || allowedOrigins.includes(origin)) {
