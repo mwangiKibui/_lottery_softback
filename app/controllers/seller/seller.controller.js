@@ -27,39 +27,39 @@ exports.signIn = async (req, res) => {
     const user = await User.findOne({ imei }).populate("subAdminId");
 
     if (!user) {
-      // res.send(encoding({ success: false, message: "User not found!" }));
-      res.send({ success: false, message: "User not found!" });
+      res.send(encoding({ success: false, message: "User not found!" }));
+      // res.send({ success: false, message: "User not found!" });
       return;
     }
 
     if (!user.isActive) {
-      // res.send(encoding({ success: false, message: "This user locked now!" }));
-      res.send({ success: false, message: "This user locked now!" });
+      res.send(encoding({ success: false, message: "This user locked now!" }));
+      // res.send({ success: false, message: "This user locked now!" });
       return;
     }
 
     if (!user.subAdminId.isActive) {
-      // res.send(
-      //   encoding({
-      //     success: false,
-      //     message: "Votre compagnie est deconnecée",
-      //   })
-      // );
-      res.send({
-        success: false,
-        message: "Votre compagnie est deconnecée",
-      });
+      res.send(
+        encoding({
+          success: false,
+          message: "Votre compagnie est deconnecée",
+        })
+      );
+      // res.send({
+      //   success: false,
+      //   message: "Votre compagnie est deconnecée",
+      // });
       return;
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      // res.send(
-      //   encoding({ success: false, message: "Mot de passe incorrecte" })
-      // );
+      res.send(
+        encoding({ success: false, message: "Mot de passe incorrecte" })
+      );
 
-      res.send({ success: false, message: "Mot de passe incorrecte" });
+      // res.send({ success: false, message: "Mot de passe incorrecte" });
       return;
     }
 
@@ -68,29 +68,29 @@ exports.signIn = async (req, res) => {
     });
 
     req.session.token = token;
-    // res.send(
-    //   encoding({
-    //     success: true,
-    //     token: token,
-    //     userName: user.userName,
-    //     companyName: user.subAdminId.companyName,
-    //     phoneNumber: user.subAdminId.phoneNumber,
-    //     address: user.subAdminId.address,
-    //     sellerId: user._id,
-    //     subAdminId: user.subAdminId._id,
-    //   })
-    // );
+    res.send(
+      encoding({
+        success: true,
+        token: token,
+        userName: user.userName,
+        companyName: user.subAdminId.companyName,
+        phoneNumber: user.subAdminId.phoneNumber,
+        address: user.subAdminId.address,
+        sellerId: user._id,
+        subAdminId: user.subAdminId._id,
+      })
+    );
 
-    res.send({
-      success: true,
-      token: token,
-      userName: user.userName,
-      companyName: user.subAdminId.companyName,
-      phoneNumber: user.subAdminId.phoneNumber,
-      address: user.subAdminId.address,
-      sellerId: user._id,
-      subAdminId: user.subAdminId._id,
-    });
+    // res.send({
+    //   success: true,
+    //   token: token,
+    //   userName: user.userName,
+    //   companyName: user.subAdminId.companyName,
+    //   phoneNumber: user.subAdminId.phoneNumber,
+    //   address: user.subAdminId.address,
+    //   sellerId: user._id,
+    //   subAdminId: user.subAdminId._id,
+    // });
   } catch (err) {
     console.log(err);
     res.status(500).send({ message: err });
