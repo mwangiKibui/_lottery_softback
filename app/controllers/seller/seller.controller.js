@@ -111,8 +111,8 @@ exports.newTicket = async (req, res) => {
   try {
     const { lotteryCategoryName } = req.body;
     const sellerId = req.userId;
-    // const numbers = JSON.parse(req.body.numbers);
-    const numbers = req.body.numbers;
+    const numbers = JSON.parse(req.body.numbers);
+    // const numbers = req.body.numbers;
     const today = moment().tz(haitiTimezone).format("yyyy-MM-DD");
     const currentTime = moment().tz(haitiTimezone).format("HH:mm");
 
@@ -135,16 +135,16 @@ exports.newTicket = async (req, res) => {
       if (!success) {
         console.log("ticket check error: ", error);
 
-        // return res.send(
-        //   encoding({
-        //     success: false,
-        //     message: "ticket save failed! try again!",
-        //   })
-        // );
-        return res.send({
-          success: false,
-          message: "ticket save failed! try again!",
-        });
+        return res.send(
+          encoding({
+            success: false,
+            message: "ticket save failed! try again!",
+          })
+        );
+        // return res.send({
+        //   success: false,
+        //   message: "ticket save failed! try again!",
+        // });
       }
 
       if (new_numbers.length > 0) {
@@ -159,70 +159,70 @@ exports.newTicket = async (req, res) => {
         await ticket.save((err, savedTicket) => {
           if (err) {
             console.log("new ticket data error :", err);
-            // res.send(
-            //   encoding({
-            //     success: false,
-            //     message: "new ticket create failed! please try again!",
-            //   })
-            // );
-            res.send({
-              success: false,
-              message: "new ticket create failed! please try again!",
-            });
+            res.send(
+              encoding({
+                success: false,
+                message: "new ticket create failed! please try again!",
+              })
+            );
+            // res.send({
+            //   success: false,
+            //   message: "new ticket create failed! please try again!",
+            // });
             return;
           } else {
             const newId = savedTicket.ticketId;
-            // res.send(
-            //   encoding({
-            //     success: true,
-            //     message: "success",
-            //     ticketId: newId,
-            //     numbers: new_numbers,
-            //     limit_data,
-            //     block_data,
-            //   })
-            // );
-            res.send({
-              success: true,
-              message: "success",
-              ticketId: newId,
-              numbers: new_numbers,
-              limit_data,
-              block_data,
-            });
+            res.send(
+              encoding({
+                success: true,
+                message: "success",
+                ticketId: newId,
+                numbers: new_numbers,
+                limit_data,
+                block_data,
+              })
+            );
+            // res.send({
+            //   success: true,
+            //   message: "success",
+            //   ticketId: newId,
+            //   numbers: new_numbers,
+            //   limit_data,
+            //   block_data,
+            // });
             return;
           }
         });
       } else {
-        // res.send(
-        //   encoding({
-        //     success: true,
-        //     message: "you cant create ticket!",
-        //     numbers: new_numbers,
-        //     limit_data,
-        //     block_data,
-        //   })
-        // );
-        res.send({
-          success: true,
-          message: "you cant create ticket!",
-          numbers: new_numbers,
-          limit_data,
-          block_data,
-        });
+        res.send(
+          encoding({
+            success: true,
+            message: "you cant create ticket!",
+            numbers: new_numbers,
+            limit_data,
+            block_data,
+          })
+        );
+        // res.send({
+        //   success: true,
+        //   message: "you cant create ticket!",
+        //   numbers: new_numbers,
+        //   limit_data,
+        //   block_data,
+        // });
         return;
       }
     } else {
-      // res.send(
-      //   encoding({
-      //     success: false,
-      //     message: `Haiti local time now: ${currentTime}. \n Time is up!. Sorry you cann't create ticket.`,
-      //   })
-      // );
-      res.send({
-        success: false,
-        message: `Haiti local time now: ${currentTime}. \n Time is up!. Sorry you cann't create ticket.`,
-      });
+      res.send(
+        encoding({
+          success: false,
+          message: `Haiti local time now: ${currentTime}. \n Time is up!. Sorry you cann't create ticket.`,
+        })
+      );
+      // res.send({
+      //   success: false,
+      //   message: `Haiti local time now: ${currentTime}. \n Time is up!. Sorry you cann't create ticket.`,
+      // });
       return;
     }
   } catch (err) {
@@ -248,13 +248,13 @@ exports.getTicket = async (req, res) => {
       query.lotteryCategoryName = lotteryCategoryName;
     }
     const ticketsObj = await Ticket.find(
-      query
-      //   {
-      //   _id: 1,
-      //   date: 1,
-      //   ticketId: 1,
-      //   lotteryCategoryName: 1,
-      // }
+      query,
+        {
+        _id: 1,
+        date: 1,
+        ticketId: 1,
+        lotteryCategoryName: 1,
+      }
     );
     res.send({ success: true, data: ticketsObj });
   } catch (err) {
@@ -457,7 +457,7 @@ exports.getSaleReportsForSeller = async (req, res) => {
           from: "paymentterms",
           let: {
             lotteryCategoryName: "$lotteryCategoryName",
-            // subAdmin: "$subAdmin",
+            subAdmin: "$subAdmin",
           },
           pipeline: [
             {
@@ -651,6 +651,7 @@ exports.deleteTicket = async (req, res) => {
 
     const currentTime = moment().tz(haitiTimezone).format("HH:mm");
     const today = moment().tz(haitiTimezone).format("yyyy-MM-DD");
+    
 
     if (
       moment(new Date(today), "yyyy-MM-DD").isSame(
