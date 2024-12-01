@@ -15,5 +15,6 @@ db.ticket = require("./ticket.model");
 db.paymentTerm =  require("./paymentTerm.model");
 db.limitCalc = require("./limitsCalc.model");
 db.specificLimits = require("./specificLimits.model");
+db.PercentageLimit = require("./PercentageLimit.model");
 
 module.exports = db;

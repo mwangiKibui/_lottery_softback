@@ -19,12 +19,14 @@ const ticketRoutes = require("./routes/subAdmin/ticket.routes");
 const reports = require("./routes/subAdmin/reports.routes");
 const sellerRoutes = require("./routes/seller/seller.routes");
 const subadminWinNumberRoutes = require("./routes/subAdmin/winNumber.routes");
+const PercentageLimit = require("./routes/subAdmin/PercentageLimit.routes");
 
 const compression = require('compression');
 const zlib = require('zlib');
 
 const app = express();
 
+// app.use(cors({ origin:"*" }));
 // app.use(cors({ origin:"http://gwtechsoft.com" }));
 const allowedOrigins = ['http://localhost:3000','http://localhost:3001', 'http://gwtechsoft.com', 'http://204.12.203.235'];
 app.use(cors({
@@ -184,5 +186,6 @@ ticketRoutes(app);
 reports(app);
 sellerRoutes(app);
 subadminWinNumberRoutes(app);
+PercentageLimit(app);
 
 module.exports = app;

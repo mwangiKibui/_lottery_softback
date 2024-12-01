@@ -3,12 +3,12 @@
 //Ok.
 const mongoose = require("mongoose");
 const db = require("../../models");
-const LimitBut = db.limits;
+const LimitBut = db.PercentageLimit;
 const specificLimits = db.specificLimits;
 
 // Create
 //this is updated for supervisor limit
-exports.addLimitBut = async (req, res) => {
+exports.addPercentageLimitBut = async (req, res) => {
   const { lotteryCategoryName, limits, seller, superVisor } = req.body;
   try {
     let newLimit = null;
@@ -79,7 +79,7 @@ exports.addLimitBut = async (req, res) => {
 
 // Read //it have to modify for seller / supervisor // subadmin
 //Now it is for all 
-exports.getLimitButAll = async (req, res) => {
+exports.getPercentageLimitButAll = async (req, res) => {
   try {
     let limits=null
     limits = await LimitBut.find({
@@ -96,7 +96,7 @@ exports.getLimitButAll = async (req, res) => {
 };
 
 // Read
-exports.getLimitBut = async (req, res) => {
+exports.getPercentageLimitBut = async (req, res) => {
   try {
     const { general } = req.query;
     let limits = null;
@@ -116,7 +116,7 @@ exports.getLimitBut = async (req, res) => {
   }
 };
 
-exports.getLimitButSeller = async (req, res) => {
+exports.getPercentageLimitButSeller = async (req, res) => {
   try {
     const sellerId=req.query.seller
     const lotteryCategoryName=req.query.lotteryCategoryName
@@ -147,7 +147,7 @@ exports.getLimitButSeller = async (req, res) => {
   }
 };
 
-exports.getLimitButSuperVisor = async (req, res) => {
+exports.getPercentageLimitButSuperVisor = async (req, res) => {
   try {
     const superVisorId=req.query.superVisor
     const lotteryCategoryName=req.query.lotteryCategoryName
@@ -179,7 +179,7 @@ exports.getLimitButSuperVisor = async (req, res) => {
 };
 
 // Update
-exports.updateLimitBut = async (req, res) => {
+exports.updatePercentageLimitBut = async (req, res) => {
   const { id } = req.params;
   const { lotteryCategoryName, limits, seller, general } = req.body;
 
@@ -217,7 +217,7 @@ exports.updateLimitBut = async (req, res) => {
 };
 
 // DELETE a block number by ID
-exports.deleteLimitBut = async (req, res) => {
+exports.deletePercentageLimitBut = async (req, res) => {
   const { id } = req.params;
   try {
     let limit = null;
