@@ -10,6 +10,8 @@ const Limits = db.limits;
 const LimitCalc = db.limitCalc;
 const BlockNumber = db.blockNumber;
 const SpecificLimits = db.specificLimits;
+const LimitPercentage = db.PercentageLimit;
+// const LimitPercentage = db.LimitPercentage;
 
 const zlib = require("zlib");
 
@@ -691,11 +693,416 @@ exports.deleteTicket = async (req, res) => {
   }
 };
 
-async function requestTicketCheck(lotteryCategoryName, sellerId, numbers) {
+// async function requestTicketCheck(lotteryCategoryName, sellerId, numbers) {
+//   try {
+//     const subAdminInfo = await User.findOne({ _id: sellerId }).populate(
+//       "subAdminId"
+//     );
+
+//     const blockNumberQuery = {
+//       subAdmin: subAdminInfo.subAdminId,
+//       lotteryCategoryName,
+//       $or: numbers.map((item) => ({
+//         gameCategory: item.gameCategory,
+//         number: item.number,
+//       })),
+//     };
+
+//     const block_data = await BlockNumber.find(blockNumberQuery, {
+//       gameCategory: 1,
+//       number: 1,
+//     });
+
+//     const matchedNumbers = new Set();
+
+//     for (const blockItem of block_data) {
+//       for (let i = numbers.length - 1; i >= 0; i--) {
+//         const item = numbers[i];
+//         if (
+//           blockItem.gameCategory === item.gameCategory &&
+//           blockItem.number === item.number
+//         ) {
+//           matchedNumbers.add(i);
+//         }
+//       }
+//     }
+
+//     const limitGameCategoryMapping = {
+//       "L4C 1": "L4C",
+//       "L4C 2": "L4C",
+//       "L4C 3": "L4C",
+//       "L5C 1": "L5C",
+//       "L5C 2": "L5C",
+//       "L5C 3": "L5C",
+//     };
+
+//     const limit_data = [];
+//     const new_numbers = [];
+//     let acceptedAmountSum = 0;
+
+//     for (let index = 0; index < numbers.length; index++) {
+//       const item = numbers[index];
+//       if (!matchedNumbers.has(index)) {
+//         let limitGameCategory =
+//           limitGameCategoryMapping[item.gameCategory] || item.gameCategory;
+//         const pipeline1 = [
+//           {
+//             $match: {
+//               subAdmin: subAdminInfo.subAdminId._id,
+//               lotteryCategoryName,
+//               $or: [
+//                 {
+//                   seller: mongoose.Types.ObjectId(sellerId),
+//                   "limits.gameCategory": limitGameCategory,
+//                   "limits.gameNumber": item.number,
+//                 },
+//                 {
+//                   "limits.gameCategory": limitGameCategory,
+//                   "limits.gameNumber": item.number,
+//                 },
+//               ],
+//             },
+//           },
+//           {
+//             $addFields: {
+//               limits: {
+//                 $filter: {
+//                   input: "$limits",
+//                   cond: {
+//                     $and: [
+//                       {
+//                         $eq: ["$$this.gameCategory", limitGameCategory],
+//                       },
+//                       {
+//                         $eq: ["$$this.gameNumber", item.number],
+//                       },
+//                     ],
+//                   },
+//                 },
+//               },
+//             },
+//           },
+//           {
+//             $project: {
+//               limits: 1,
+//             },
+//           },
+//         ];
+
+//         const pipeline2 = [
+//           {
+//             $match: {
+//               subAdmin: subAdminInfo.subAdminId._id,
+//               lotteryCategoryName,
+//               $or: [
+//                 {
+//                   seller: mongoose.Types.ObjectId(sellerId),
+//                   "limits.gameCategory": limitGameCategory,
+//                 },
+//                 {
+//                   "limits.gameCategory": limitGameCategory,
+//                 },
+//               ],
+//             },
+//           },
+//           {
+//             $addFields: {
+//               limits: {
+//                 $filter: {
+//                   input: "$limits",
+//                   cond: {
+//                     $eq: ["$$this.gameCategory", limitGameCategory],
+//                   },
+//                 },
+//               },
+//             },
+//           },
+//           {
+//             $project: {
+//               limits: 1,
+//             },
+//           },
+//         ];
+
+//         let limit = null;
+//         limit = await SpecificLimits.aggregate(pipeline1);
+//         if (limit.length == 0) {
+//           limit = await Limits.aggregate(pipeline2);
+//         }
+
+//         if (limit.length > 0) {
+//           let limitCalc = await LimitCalc.findOne(
+//             {
+//               limitId: limit[0]._id,
+//               "soldState.gameCategory": limitGameCategory,
+//               "soldState.gameNumber": item.number,
+//             },
+//             {
+//               "soldState.$": 1,
+//             }
+//           );
+
+//           let restQuantity = null;
+//           let addAmount = null;
+
+//           if (limitCalc) {
+//             restQuantity =
+//               limit[0].limits[0]?.limitsButs -
+//               limitCalc.soldState[0]?.soldQuantity;
+
+//             if (item.amount > restQuantity) {
+//               limit_data.push({ ...item, availableAmount: restQuantity });
+//               addAmount = restQuantity;
+//             } else {
+//               addAmount = item.amount;
+//             }
+
+//             if (addAmount > 0) {
+//               await LimitCalc.findOneAndUpdate(
+//                 {
+//                   limitId: limit[0]._id,
+//                   "soldState.gameCategory": limitGameCategory,
+//                   "soldState.gameNumber": item.number,
+//                 },
+//                 {
+//                   $inc: {
+//                     "soldState.$.soldQuantity": addAmount,
+//                   },
+//                 },
+//                 { new: true }
+//               );
+//             }
+//           } else {
+//             if (item.amount > limit[0].limits[0]?.limitsButs) {
+//               limit_data.push({
+//                 ...item,
+//                 availableAmount: limit[0].limits[0]?.limitsButs,
+//               });
+
+//               addAmount = limit[0].limits[0]?.limitsButs;
+//             } else {
+//               addAmount = item.amount;
+//             }
+//             limitCalc = await LimitCalc.findOne({ limitId: limit[0]._id });
+
+//             if (limitCalc) {
+//               limitCalc.soldState.push({
+//                 gameCategory: limitGameCategory,
+//                 gameNumber: item.number,
+//                 soldQuantity: addAmount,
+//               });
+
+//               await limitCalc.save();
+//             } else {
+//               const newLimitCalc = new LimitCalc({
+//                 limitId: limit[0]._id,
+//                 soldState: [
+//                   {
+//                     gameCategory: limitGameCategory,
+//                     gameNumber: item.number,
+//                     soldQuantity: addAmount,
+//                   },
+//                 ],
+//               });
+
+//               await newLimitCalc.save();
+//             }
+//           }
+
+//           if (addAmount > 0) {
+//             new_numbers.push({ ...item, amount: addAmount, bonus: false });
+//           }
+//         } else {
+//           new_numbers.push({ ...item, bonus: false });
+//         }
+
+//         acceptedAmountSum += item.amount;
+//       }
+//     }
+
+//     if (subAdminInfo.subAdminId.bonusFlag && new_numbers.length > 0) {
+//       if (acceptedAmountSum >= 50 && acceptedAmountSum < 250) {
+//         const bonus_1 =
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0") +
+//           "×" +
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0");
+//         const bonus_2 =
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0") +
+//           "×" +
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0");
+//         new_numbers.push({
+//           gameCategory: "MRG",
+//           number: bonus_1,
+//           amount: 1,
+//           bonus: true,
+//         });
+//         new_numbers.push({
+//           gameCategory: "MRG",
+//           number: bonus_2,
+//           amount: 1,
+//           bonus: true,
+//         });
+//       } else if (acceptedAmountSum >= 250 && acceptedAmountSum < 1000) {
+//         const bonus_1 =
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0") +
+//           "×" +
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0");
+//         const bonus_2 =
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0") +
+//           "×" +
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0");
+//         const bonus_3 =
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0") +
+//           "×" +
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0");
+//         const bonus_4 =
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0") +
+//           "×" +
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0");
+//         new_numbers.push({
+//           gameCategory: "MRG",
+//           number: bonus_1,
+//           amount: 1,
+//           bonus: true,
+//         });
+//         new_numbers.push({
+//           gameCategory: "MRG",
+//           number: bonus_2,
+//           amount: 1,
+//           bonus: true,
+//         });
+//         new_numbers.push({
+//           gameCategory: "MRG",
+//           number: bonus_3,
+//           amount: 1,
+//           bonus: true,
+//         });
+//         new_numbers.push({
+//           gameCategory: "MRG",
+//           number: bonus_4,
+//           amount: 1,
+//           bonus: true,
+//         });
+//       } else if (acceptedAmountSum >= 1000) {
+//         const bonus_1 =
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0") +
+//           "×" +
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0");
+//         const bonus_2 =
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0") +
+//           "×" +
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0");
+//         const bonus_3 =
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0") +
+//           "×" +
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0");
+//         const bonus_4 =
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0") +
+//           "×" +
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0");
+//         const bonus_5 =
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0") +
+//           "×" +
+//           Math.floor(Math.random() * 99)
+//             .toString()
+//             .padStart(2, "0");
+//         new_numbers.push({
+//           gameCategory: "MRG",
+//           number: bonus_1,
+//           amount: 1,
+//           bonus: true,
+//         });
+//         new_numbers.push({
+//           gameCategory: "MRG",
+//           number: bonus_2,
+//           amount: 1,
+//           bonus: true,
+//         });
+//         new_numbers.push({
+//           gameCategory: "MRG",
+//           number: bonus_3,
+//           amount: 1,
+//           bonus: true,
+//         });
+//         new_numbers.push({
+//           gameCategory: "MRG",
+//           number: bonus_4,
+//           amount: 1,
+//           bonus: true,
+//         });
+//         new_numbers.push({
+//           gameCategory: "MRG",
+//           number: bonus_5,
+//           amount: 1,
+//           bonus: true,
+//         });
+//       }
+//     }
+
+//     return { success: true, block_data, limit_data, new_numbers };
+//   } catch (error) {
+//     console.log("ticket check error: ", error);
+//     return { success: false, error: error };
+//   }
+// }
+
+
+// Read
+async function requestTicketCheck(
+  lotteryCategoryName,
+  sellerId,
+  numbers,
+) {
   try {
+    // Get seller detail and populate subAdmin field
     const subAdminInfo = await User.findOne({ _id: sellerId }).populate(
       "subAdminId"
     );
+
+    let superVisorId = subAdminInfo?.superVisorId || "";
+    sellerId = mongoose.Types.ObjectId(sellerId);
 
     const blockNumberQuery = {
       subAdmin: subAdminInfo.subAdminId,
@@ -706,217 +1113,518 @@ async function requestTicketCheck(lotteryCategoryName, sellerId, numbers) {
       })),
     };
 
-    const block_data = await BlockNumber.find(blockNumberQuery, {
+    // Get data from BlockNumber that matches the query updated not tested yet
+    const block_number = await BlockNumber.find(blockNumberQuery, {
       gameCategory: 1,
       number: 1,
+      superVisor: 1,
+      seller: 1,
     });
+
+    // console.log("block data" ,block_data)
+    let block_data = [];
 
     const matchedNumbers = new Set();
 
-    for (const blockItem of block_data) {
+    // Check for matches in block data
+    for (const blockItem of block_number) {
       for (let i = numbers.length - 1; i >= 0; i--) {
         const item = numbers[i];
+        //if it have sellerId and equal to userId
+
+        if (blockItem?.seller && sellerId.equals(blockItem.seller)) {
+          if (
+            blockItem.gameCategory === item.gameCategory &&
+            blockItem.number === item.number
+          ) {
+            block_data.push(blockItem);
+            matchedNumbers.add(i);
+          }
+        }
+        //  if it have supervisor and equal to user's supervisor
         if (
-          blockItem.gameCategory === item.gameCategory &&
-          blockItem.number === item.number
+          superVisorId &&
+          blockItem?.superVisor &&
+          superVisorId.equals(blockItem.superVisor)
         ) {
-          matchedNumbers.add(i);
+          if (
+            blockItem.gameCategory === item.gameCategory &&
+            blockItem.number === item.number
+          ) {
+            block_data.push(blockItem);
+            matchedNumbers.add(i);
+          }
+        }
+
+        // data donot have supervisor and seller only admin
+        if (!blockItem?.superVisor && !blockItem.seller) {
+          if (
+            blockItem.gameCategory === item.gameCategory &&
+            blockItem.number === item.number
+          ) {
+            block_data.push(blockItem);
+            matchedNumbers.add(i);
+          }
         }
       }
     }
-
-    const limitGameCategoryMapping = {
-      "L4C 1": "L4C",
-      "L4C 2": "L4C",
-      "L4C 3": "L4C",
-      "L5C 1": "L5C",
-      "L5C 2": "L5C",
-      "L5C 3": "L5C",
-    };
 
     const limit_data = [];
     const new_numbers = [];
     let acceptedAmountSum = 0;
+    const currentDate = moment().tz(haitiTimezone).format("yyyy-MM-DD");
+
+    let totalBLTAmount = 0;
+
+    for (let num of numbers) {
+      const amount = Number(num.amount); // Convert amount to a number
+      if (num.gameCategory === "BLT") {
+        totalBLTAmount += amount;
+      }
+    }
+
+    if (totalBLTAmount == 0) {
+      return { success: false, error: `BLT  Amount Ticket can not be Zero ` };
+    }
+
+    // soft testing upto here
 
     for (let index = 0; index < numbers.length; index++) {
       const item = numbers[index];
+
       if (!matchedNumbers.has(index)) {
-        let limitGameCategory =
-          limitGameCategoryMapping[item.gameCategory] || item.gameCategory;
-        const pipeline1 = [
-          {
-            $match: {
-              subAdmin: subAdminInfo.subAdminId._id,
-              lotteryCategoryName,
-              $or: [
-                {
-                  seller: mongoose.Types.ObjectId(sellerId),
-                  "limits.gameCategory": limitGameCategory,
-                  "limits.gameNumber": item.number,
-                },
-                {
-                  "limits.gameCategory": limitGameCategory,
-                  "limits.gameNumber": item.number,
-                },
-              ],
-            },
-          },
-          {
-            $addFields: {
-              limits: {
-                $filter: {
-                  input: "$limits",
-                  cond: {
-                    $and: [
-                      {
-                        $eq: ["$$this.gameCategory", limitGameCategory],
-                      },
-                      {
-                        $eq: ["$$this.gameNumber", item.number],
-                      },
-                    ],
-                  },
-                },
+        let limitGameCategory = item.gameCategory;
+
+        let maxGameLimit = 0;
+        // if you have other gameCategory the BLT check the percentage limit
+        if (limitGameCategory != "BLT") {
+          //now here get the percentage amount from the model
+          const LimitPercentArray = await LimitPercentage.aggregate([
+            {
+              $match: {
+                subAdmin: subAdminInfo.subAdminId._id,
+                lotteryCategoryName: lotteryCategoryName,
               },
             },
-          },
-          {
-            $project: {
-              limits: 1,
+            {
+              $unwind: "$limits",
             },
-          },
-        ];
-
-        const pipeline2 = [
-          {
-            $match: {
-              subAdmin: subAdminInfo.subAdminId._id,
-              lotteryCategoryName,
-              $or: [
-                {
-                  seller: mongoose.Types.ObjectId(sellerId),
-                  "limits.gameCategory": limitGameCategory,
-                },
-                {
-                  "limits.gameCategory": limitGameCategory,
-                },
-              ],
+            {
+              $match: { "limits.gameCategory": limitGameCategory },
             },
-          },
-          {
-            $addFields: {
-              limits: {
-                $filter: {
-                  input: "$limits",
-                  cond: {
-                    $eq: ["$$this.gameCategory", limitGameCategory],
-                  },
-                },
+            {
+              $project: {
+                _id: 0,
+                limitPercent: "$limits.limitPercent",
               },
             },
-          },
-          {
-            $project: {
-              limits: 1,
-            },
-          },
-        ];
+          ]);
 
-        let limit = null;
-        limit = await SpecificLimits.aggregate(pipeline1);
-        if (limit.length == 0) {
-          limit = await Limits.aggregate(pipeline2);
+          // console.log("Limit Percentage", LimitPercentArray);
+          
+          const gameLimitPercent = LimitPercentArray[0]?.limitPercent;
+
+          // then check the BLTAmount ka percentage should be greater then the gameCategorryAmount+item.Amount
+if (gameLimitPercent){
+  maxGameLimit = Math.floor((gameLimitPercent / 100) * totalBLTAmount);
+}else{
+  maxGameLimit = item.amount
+}
+        }
+        //This is how much amount a person put using percentageLimit
+        let maxAmountPriceBuy = 0;
+        if (limitGameCategory == "BLT") {
+          maxAmountPriceBuy = item.amount;
+        } else {
+          if (maxGameLimit >= item.amount) {
+            maxAmountPriceBuy = item.amount;
+          } else {
+            maxAmountPriceBuy = maxGameLimit;
+          }
         }
 
-        if (limit.length > 0) {
-          let limitCalc = await LimitCalc.findOne(
+        // Total limit (subAdmin limit ) amount
+        let subAdminLimitsCalcId = null;
+        let otherLimitCalcId = null;
+
+        let subAdminLimitId = null;
+        let otherLimitId = null;
+        const numberParts = item.number.split("×");
+        let alternateNumber = item.number;
+        if (numberParts.length > 1) {
+          alternateNumber = numberParts.reverse().join("×");
+        }
+        const subAdminLimit = await Limits.aggregate([
+          {
+            $match: {
+              subAdmin: subAdminInfo.subAdminId._id,
+              lotteryCategoryName: lotteryCategoryName,
+              superVisor: { $exists: false },
+              seller: { $exists: false },
+            },
+          },
+          {
+            $unwind: "$limits",
+          },
+          {
+            $match: {
+              "limits.gameCategory": limitGameCategory,
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              subAdmin: 1,
+              lotteryCategoryName: 1,
+              limits: 1,
+            },
+          },
+        ]);
+
+        let remainingQuantitySubAdmin = maxAmountPriceBuy;
+        subAdminLimitId = subAdminLimit[0]?._id;
+
+        // if subAdminLimit exist
+        // console.log("subAdminLimit: ",subAdminLimit)
+        if (subAdminLimit.length > 0) {
+          const soldQuantitySubAdmin = await LimitCalc.findOne({
+            limitId: subAdminLimitId,
+            date: new Date(currentDate),
+          });
+          subAdminLimitsCalcId = soldQuantitySubAdmin?._id;
+
+          const totalSoldQuantitySubAdmin = await LimitCalc.aggregate([
             {
-              limitId: limit[0]._id,
+              $match: {
+                limitId: subAdminLimit[0]._id,
+                date: new Date(currentDate),
+              },
+            },
+            {
+              $unwind: "$soldState",
+            },
+            {
+              $match: {
+                $or: [
+                  {
+                    "soldState.gameCategory": limitGameCategory,
+                    "soldState.gameNumber": item.number,
+                  },
+                  {
+                    "soldState.gameCategory": limitGameCategory,
+                    "soldState.gameNumber": alternateNumber,
+                  },
+                ],
+              },
+            },
+            {
+              $group: {
+                _id: null,
+                totalSold: { $sum: "$soldState.soldQuantity" },
+              },
+            },
+          ]);
+          // console.log("totalSoldQuantitySubAdmin",totalSoldQuantitySubAdmin)
+
+          const totalSoldBySubAmin =
+            totalSoldQuantitySubAdmin?.length > 0
+              ? totalSoldQuantitySubAdmin[0].totalSold
+              : 0;
+          remainingQuantitySubAdmin =
+            subAdminLimit[0]?.limits.limitsButs - totalSoldBySubAmin;
+        }
+
+        // finding seller or supervisor remaining amount and the actualAmount to put on a number
+        const hasSuperVisorId = !!subAdminInfo?.superVisorId;
+        let actualmaxAmountPriceBuy = 0;
+
+        if (hasSuperVisorId) {
+          // if it have supervisorId then find the superVisorlimt
+
+          const pipeline1 = {
+            $match: {
+              subAdmin: subAdminInfo.subAdminId._id,
+              lotteryCategoryName,
+              superVisor: superVisorId,
+            },
+          };
+          // expand all the limit and get the limit based on gameCategory
+          let superVisorLimit = await Limits.aggregate([
+            pipeline1,
+            {
+              $unwind: "$limits",
+            },
+            {
+              $match: { "limits.gameCategory": limitGameCategory },
+            },
+          ]);
+
+          otherLimitId = superVisorLimit[0]?._id;
+          let remainingQuantitySuperVisor = maxAmountPriceBuy;
+          if (superVisorLimit?.length > 0) {
+            let soldQuantitySuperVisor = await LimitCalc.findOne({
+              limitId: superVisorLimit[0]._id,
+              date: new Date(currentDate),
+            });
+
+            otherLimitCalcId = soldQuantitySuperVisor?._id;
+            // calculate sold qunatity of a number(and its reverse in MRG) in supervisor limitsCalc
+            const totalSoldQuantity = await LimitCalc.aggregate([
+              {
+                $match: {
+                  limitId: superVisorLimit[0]._id,
+                  date: new Date(currentDate),
+                },
+              },
+              {
+                $unwind: "$soldState",
+              },
+              {
+                $match: {
+                  $or: [
+                    {
+                      "soldState.gameCategory": limitGameCategory,
+                      "soldState.gameNumber": item.number,
+                    },
+                    {
+                      "soldState.gameCategory": limitGameCategory,
+                      "soldState.gameNumber": alternateNumber,
+                    },
+                  ],
+                },
+              },
+              {
+                $group: {
+                  _id: null,
+                  totalSold: { $sum: "$soldState.soldQuantity" },
+                },
+              },
+            ]);
+
+            const totalSoldBySuperVisor =
+              totalSoldQuantity?.length > 0
+                ? totalSoldQuantity[0]?.totalSold
+                : 0;
+            remainingQuantitySuperVisor =
+              superVisorLimit[0]?.limits?.limitsButs - totalSoldBySuperVisor;
+          }
+          // console.log(maxAmountPriceBuy,remainingQuantitySubAdmin,remainingQuantitySuperVisor )
+          actualmaxAmountPriceBuy = Math.min(
+            maxAmountPriceBuy,
+            remainingQuantitySubAdmin,
+            remainingQuantitySuperVisor
+          );
+        } else {
+          // try to find seller limit if it doesnot have supervisor mean independent seller
+          const pipeline1 = {
+            $match: {
+              subAdmin: subAdminInfo.subAdminId._id,
+              lotteryCategoryName,
+              seller: sellerId,
+            },
+          };
+
+          sellerLimit = await Limits.aggregate([
+            pipeline1,
+            {
+              $unwind: "$limits",
+            },
+            {
+              $match: { "limits.gameCategory": limitGameCategory },
+            },
+          ]);
+
+          otherLimitId = sellerLimit?._id;
+          let remainingQuantitySeller = maxAmountPriceBuy;
+          if (sellerLimit?.length > 0) {
+            let soldQuantitySeller = await LimitCalc.findOne(
+              {
+                limitId: sellerLimit[0]._id,
+                date: new Date(currentDate),
+                "soldState.gameCategory": limitGameCategory,
+                "soldState.gameNumber": item.number,
+              },
+              {
+                "soldState.$": 1,
+              }
+            );
+
+            otherLimitCalcId = soldQuantitySeller?._id;
+
+            const totalSoldQuantity = await LimitCalc.aggregate([
+              {
+                $match: {
+                  limitId: sellerLimit[0]?._id,
+                  date: new Date(currentDate),
+                },
+              },
+              {
+                $unwind: "$soldState",
+              },
+              {
+                $match: {
+                  $or: [
+                    {
+                      "soldState.gameCategory": limitGameCategory,
+                      "soldState.gameNumber": item.number,
+                    },
+                    {
+                      "soldState.gameCategory": limitGameCategory,
+                      "soldState.gameNumber": alternateNumber,
+                    },
+                  ],
+                },
+              },
+              {
+                $group: {
+                  _id: null,
+                  totalSold: { $sum: "$soldState.soldQuantity" },
+                },
+              },
+            ]);
+
+            const totalSoldBySeller =
+              totalSoldQuantity?.length > 0
+                ? totalSoldQuantity[0].totalSold
+                : 0;
+            remainingQuantitySeller =
+              sellerLimit[0]?.limits?.limitsButs - totalSoldBySeller;
+          }
+          // console.log("Line 1493: "+maxAmountPriceBuy,remainingQuantitySubAdmin,remainingQuantitySeller )
+          actualmaxAmountPriceBuy = Math.min(
+            maxAmountPriceBuy,
+            remainingQuantitySubAdmin,
+            remainingQuantitySeller
+          );
+        }
+
+        // console.log(actualmaxAmountPriceBuy)
+
+        // console.log(item)
+        // console.log("subAdminLimitsCalcId",subAdminLimitsCalcId)
+        // console.log("subAdminLimitId",subAdminLimitId)
+        // console.log("otherLimitCalcId",otherLimitCalcId)
+        // console.log("otherLimitId",otherLimitId)
+
+        if (subAdminLimitsCalcId) {
+          const updatedLimit = await LimitCalc.findOneAndUpdate(
+            {
+              _id: subAdminLimitsCalcId,
               "soldState.gameCategory": limitGameCategory,
               "soldState.gameNumber": item.number,
             },
             {
-              "soldState.$": 1,
-            }
+              $inc: {
+                "soldState.$.soldQuantity": actualmaxAmountPriceBuy,
+              },
+            },
+            { new: true }
           );
 
-          let restQuantity = null;
-          let addAmount = null;
+          if (!updatedLimit) {
+            const newEntry = {
+              gameCategory: limitGameCategory,
+              gameNumber: item.number,
+              soldQuantity: actualmaxAmountPriceBuy,
+            };
 
-          if (limitCalc) {
-            restQuantity =
-              limit[0].limits[0]?.limitsButs -
-              limitCalc.soldState[0]?.soldQuantity;
-
-            if (item.amount > restQuantity) {
-              limit_data.push({ ...item, availableAmount: restQuantity });
-              addAmount = restQuantity;
-            } else {
-              addAmount = item.amount;
-            }
-
-            if (addAmount > 0) {
-              await LimitCalc.findOneAndUpdate(
-                {
-                  limitId: limit[0]._id,
-                  "soldState.gameCategory": limitGameCategory,
-                  "soldState.gameNumber": item.number,
-                },
-                {
-                  $inc: {
-                    "soldState.$.soldQuantity": addAmount,
-                  },
-                },
-                { new: true }
-              );
-            }
-          } else {
-            if (item.amount > limit[0].limits[0]?.limitsButs) {
-              limit_data.push({
-                ...item,
-                availableAmount: limit[0].limits[0]?.limitsButs,
-              });
-
-              addAmount = limit[0].limits[0]?.limitsButs;
-            } else {
-              addAmount = item.amount;
-            }
-            limitCalc = await LimitCalc.findOne({ limitId: limit[0]._id });
-
-            if (limitCalc) {
-              limitCalc.soldState.push({
-                gameCategory: limitGameCategory,
-                gameNumber: item.number,
-                soldQuantity: addAmount,
-              });
-
-              await limitCalc.save();
-            } else {
-              const newLimitCalc = new LimitCalc({
-                limitId: limit[0]._id,
-                soldState: [
-                  {
-                    gameCategory: limitGameCategory,
-                    gameNumber: item.number,
-                    soldQuantity: addAmount,
-                  },
-                ],
-              });
-
-              await newLimitCalc.save();
-            }
-          }
-
-          if (addAmount > 0) {
-            new_numbers.push({ ...item, amount: addAmount, bonus: false });
+            // Perform the upsert
+            const upsertedLimit = await LimitCalc.findOneAndUpdate(
+              { _id: subAdminLimitsCalcId },
+              { $push: { soldState: newEntry } },
+              { new: true }
+            );
           }
         } else {
-          new_numbers.push({ ...item, bonus: false });
+          if (subAdminLimitId) {
+            const newLimit = new LimitCalc({
+              limitId: subAdminLimitId,
+              date: new Date(currentDate),
+              soldState: [
+                {
+                  gameCategory: limitGameCategory,
+                  gameNumber: item.number,
+                  soldQuantity: actualmaxAmountPriceBuy,
+                },
+              ],
+            });
+            await newLimit.save();
+          }
         }
 
-        acceptedAmountSum += item.amount;
+        if (otherLimitCalcId) {
+          const updatedLimit = await LimitCalc.findOneAndUpdate(
+            {
+              _id: otherLimitCalcId,
+              "soldState.gameCategory": limitGameCategory,
+              "soldState.gameNumber": item.number,
+            },
+            {
+              $inc: {
+                "soldState.$.soldQuantity": actualmaxAmountPriceBuy,
+              },
+            },
+            { new: true }
+          );
+          if (!updatedLimit) {
+            const newEntry = {
+              gameCategory: limitGameCategory,
+              gameNumber: item.number,
+              soldQuantity: actualmaxAmountPriceBuy,
+            };
+
+            // Perform the upsert
+            const upsertedLimit = await LimitCalc.findOneAndUpdate(
+              { _id: otherLimitCalcId },
+              { $push: { soldState: newEntry } },
+              { new: true }
+            );
+          }
+        } else {
+          if (otherLimitId) {
+            const newLimit = new LimitCalc({
+              limitId: otherLimitId,
+              date: new Date(currentDate),
+              soldState: [
+                {
+                  gameCategory: limitGameCategory,
+                  gameNumber: item.number,
+                  soldQuantity: actualmaxAmountPriceBuy,
+                },
+              ],
+            });
+            await newLimit.save();
+          }
+        }
+
+        if (
+          actualmaxAmountPriceBuy == item.amount &&
+          actualmaxAmountPriceBuy > 0
+        ) {
+          new_numbers.push({
+            ...item,
+            amount: actualmaxAmountPriceBuy,
+            bonus: false,
+          });
+        } else {
+          if (actualmaxAmountPriceBuy > 0)
+            new_numbers.push({
+              ...item,
+              amount: actualmaxAmountPriceBuy,
+              bonus: false,
+            });
+          limit_data.push({
+            ...item,
+            availableAmount: actualmaxAmountPriceBuy,
+          });
+        }
+        if (actualmaxAmountPriceBuy > 0) {
+          acceptedAmountSum += actualmaxAmountPriceBuy;
+        }
       }
     }
+
+    // It is working fine for BLT  Not tested percentage Limit Part
 
     if (subAdminInfo.subAdminId.bonusFlag && new_numbers.length > 0) {
       if (acceptedAmountSum >= 50 && acceptedAmountSum < 250) {
@@ -2774,23 +3482,3 @@ function encoding(data) {
 //   }
 // };
 
-// // This is check blocked seller. like this middleware.
-// exports.isActive = (req, res, next) => {
-//   User.findById(req.userId).exec((err, user) => {
-//     if (err) {
-//       res.status(500).send({ message: err });
-//       return;
-//     }
-//     if (user && user.isActive === true) {
-//       next();
-//       return;
-//     }
-
-//     res.send(encoding({ success: false, message: "Unauthorized!" }));
-//     return;
-//   });
-// };
-
-// function encoding(data) {
-//   return browserify_zlib.gzipSync(JSON.stringify(data));
-// }
