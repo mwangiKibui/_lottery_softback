@@ -1,6 +1,14 @@
+const { join } = require("path");
+
+require("dotenv").config({
+  path:join(__dirname,"..","..",".env")
+});
+
+
+
 module.exports = {
-  HOST: "127.0.0.1",//"localhost",
-  PORT: 27017,
+  HOST: process.env.MONGODB_HOST || "127.0.0.1",//"localhost",
+  PORT: process.env.MONGODB_PORT || 27017, // default port
   DB: "lottery_db"
 };
 

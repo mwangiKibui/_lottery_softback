@@ -1,6 +1,7 @@
 // app.js
 const express = require("express");
 const cors = require("cors");
+const {join} = require("path");
 const bodyParser = require('body-parser');
 const cron = require('node-cron');
 const cookieSession = require("cookie-session");
@@ -23,6 +24,9 @@ const PercentageLimit = require("./routes/subAdmin/PercentageLimit.routes");
 
 const compression = require('compression');
 const zlib = require('zlib');
+require("dotenv").config({
+  path:join(__dirname,"..",".env")
+});
 
 const app = express();
 
@@ -124,9 +128,10 @@ const createInitialAdminData = async() => {
   }
 }
 
+const dbUrl = process.env.MONGODB_HOST ? process.env.MONGODB_HOST : `mongodb://${dbConfig.HOST}:${dbConfig.PORT}/${dbConfig.DB}`;
 db.mongoose
 // .connect(`${dbConfig.URI}`, {
-.connect(`mongodb://${dbConfig.HOST}:${dbConfig.PORT}/${dbConfig.DB}`, {
+.connect(dbUrl, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
     useFindAndModify: false
