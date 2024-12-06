@@ -1622,16 +1622,30 @@ async function requestTicketCheck(
           });
         } else {
           let duplicateExists = limit_data.find(el => (el.number ==  item.number || el.number == alternateNumber) && el.gameCategory == item.gameCategory);
-          
+          let newNumbersDuplicate = new_numbers.find(el => (el.number ==  item.number || el.number == alternateNumber) && el.gameCategory == item.gameCategory);
+
           if(duplicateExists){
             if(duplicateExists.availableAmount < item.amount){
               availableAmount = 0;
-            }else if(duplicateExists.availableAmount == item.amount){
+            }else if(duplicateExists.amount && !duplicateExists.availableAmount){
+              let remainderAmount = actualmaxAmountPriceBuy - duplicateExists.amount;
+              availableAmount = remainderAmount;
+            }
+            else if(duplicateExists.availableAmount == item.amount){
               let remainderAmount = actualmaxAmountPriceBuy - duplicateExists.availableAmount;
               availableAmount = remainderAmount;
             }
+          }else if(newNumbersDuplicate){
+            if(newNumbersDuplicate.amount < actualmaxAmountPriceBuy){
+              availableAmount = actualmaxAmountPriceBuy - newNumbersDuplicate.amount;
+            }
+            else if(newNumbersDuplicate.amount == actualmaxAmountPriceBuy){
+              availableAmount = 0;
+            }
           }
-          if (actualmaxAmountPriceBuy > 0)
+
+
+          if (availableAmount > 0)
             new_numbers.push({
               ...item,
               amount: availableAmount,
