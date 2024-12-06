@@ -102,6 +102,12 @@ exports.newTicket = async (req, res) => {
       const { success, error, limit_data, block_data, new_numbers } =
         await requestTicketCheck(lotteryCategoryName, sellerId, numbers);
 
+
+      console.log("success ",success);
+      console.log("limit data ",limit_data);
+      console.log("block data ",block_data);
+      console.log("new numbers ",new_numbers);
+
       if (!success) {
         console.log("ticket check error: ", error);
         return res.send(encoding({
@@ -1121,7 +1127,6 @@ async function requestTicketCheck(
       seller: 1,
     });
 
-    // console.log("block data" ,block_data)
     let block_data = [];
 
     const matchedNumbers = new Set();
@@ -1220,17 +1225,18 @@ async function requestTicketCheck(
             },
           ]);
 
-          // console.log("Limit Percentage", LimitPercentArray);
+          console.log("Limit Percentage here is >>>>>>>>>>", LimitPercentArray);
           
           const gameLimitPercent = LimitPercentArray[0]?.limitPercent;
 
           // then check the BLTAmount ka percentage should be greater then the gameCategorryAmount+item.Amount
-if (gameLimitPercent){
-  maxGameLimit = Math.floor((gameLimitPercent / 100) * totalBLTAmount);
-}else{
-  maxGameLimit = item.amount
-}
+          if (gameLimitPercent){
+            maxGameLimit = Math.floor((gameLimitPercent / 100) * totalBLTAmount);
+          }else{
+            maxGameLimit = item.amount
+          }
         }
+
         //This is how much amount a person put using percentageLimit
         let maxAmountPriceBuy = 0;
         if (limitGameCategory == "BLT") {
@@ -1250,10 +1256,12 @@ if (gameLimitPercent){
         let subAdminLimitId = null;
         let otherLimitId = null;
         const numberParts = item.number.split("×");
+
         let alternateNumber = item.number;
         if (numberParts.length > 1) {
           alternateNumber = numberParts.reverse().join("×");
         }
+
         const subAdminLimit = await Limits.aggregate([
           {
             $match: {
@@ -1596,7 +1604,13 @@ if (gameLimitPercent){
             await newLimit.save();
           }
         }
-
+        /** 
+         * confirm if there is a record in new numbers that shares the same number.
+         * if there is, check if the item amount is greater than the available amount.
+         * if it is, do not add it.
+         * else, add it as is now.
+         */
+        let availableAmount = actualmaxAmountPriceBuy;
         if (
           actualmaxAmountPriceBuy == item.amount &&
           actualmaxAmountPriceBuy > 0
@@ -1607,19 +1621,29 @@ if (gameLimitPercent){
             bonus: false,
           });
         } else {
+          let duplicateExists = limit_data.find(el => (el.number ==  item.number || el.number == alternateNumber) && el.gameCategory == item.gameCategory);
+          
+          if(duplicateExists){
+            if(duplicateExists.availableAmount < item.amount){
+              availableAmount = 0;
+            }else if(duplicateExists.availableAmount == item.amount){
+              let remainderAmount = actualmaxAmountPriceBuy - duplicateExists.availableAmount;
+              availableAmount = remainderAmount;
+            }
+          }
           if (actualmaxAmountPriceBuy > 0)
             new_numbers.push({
               ...item,
-              amount: actualmaxAmountPriceBuy,
+              amount: availableAmount,
               bonus: false,
             });
           limit_data.push({
             ...item,
-            availableAmount: actualmaxAmountPriceBuy,
+            availableAmount: availableAmount,
           });
         }
-        if (actualmaxAmountPriceBuy > 0) {
-          acceptedAmountSum += actualmaxAmountPriceBuy;
+        if (availableAmount > 0) {
+          acceptedAmountSum += availableAmount;
         }
       }
     }
