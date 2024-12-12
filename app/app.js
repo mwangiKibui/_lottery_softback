@@ -4,6 +4,7 @@ const cors = require("cors");
 const {join} = require("path");
 const bodyParser = require('body-parser');
 const cron = require('node-cron');
+const multer = require('multer');
 const cookieSession = require("cookie-session");
 const dbConfig = require("./config/db.config");
 const authRoutes = require("./routes/auth.routes");
@@ -177,6 +178,7 @@ app.get("/", (req, res) => {
   res.json({ message: "Welcome to lottery application." });
 });
 
+// Error handling middleware for Multer
 authRoutes(app);
 lotteryCategoryRoutes(app);
 gameCategoryRoutes(app);
@@ -192,5 +194,21 @@ reports(app);
 sellerRoutes(app);
 subadminWinNumberRoutes(app);
 PercentageLimit(app);
+
+
+app.use((err, req, res, next) => {
+  if (err instanceof multer.MulterError) {
+    return res.status(400).json({
+      success:false,
+      message: err.message
+    });
+  } else if (err) {
+    return res.status(400).json({
+      success: false,
+      message: err.message
+    });
+  }
+  next();
+});
 
 module.exports = app;

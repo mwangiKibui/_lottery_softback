@@ -9,6 +9,7 @@ exports.addSubadmin = async (req, res) => {
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const user = new User({
       ...req.body,
+      companyLogo:req.file.path,
       password: hashedPassword,
       role: "subAdmin",
       managerId: req.userId

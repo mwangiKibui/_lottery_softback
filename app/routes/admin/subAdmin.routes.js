@@ -1,5 +1,6 @@
 const { authJwt, verifySignUp } = require("../../middlewares");
 const controller = require("../../controllers/admin/subAdmin.controller");
+const upload = require("../../config/upload.config");
 
 module.exports = function (app) {
   app.use(function (req, res, next) {
@@ -11,6 +12,7 @@ module.exports = function (app) {
   app.post(
     "/api/admin/addsubadmin",
     [authJwt.verifyToken, authJwt.isAdmin, verifySignUp.checkDuplicateuserName],
+    upload.single("companyLogo"),
     controller.addSubadmin
   );
 
