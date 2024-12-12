@@ -39,6 +39,9 @@ exports.updateSubadmin = async (req, res) => {
     if (!user) {
       res.status(404).send();
     }
+    if(req.file && req.file.path){
+      user.companyLogo = req.file.path;
+    }
     updates.forEach((update) => {
       if (`${req.body[update]}` != "") { // only update if the field exists in the req.body object
         user[update] = req.body[update];

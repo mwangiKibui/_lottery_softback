@@ -27,6 +27,7 @@ module.exports = function (app) {
   app.patch(
     "/api/admin/updatesubadmin/:id",
     [authJwt.verifyToken, verifySignUp.checkDuplicateuserName, authJwt.isAdmin],
+    upload.single("companyLogo"),
     controller.updateSubadmin
   );
 
