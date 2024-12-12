@@ -1,6 +1,6 @@
 const db = require("../../models");
 const User = db.user;
-
+const subAdminLogosPath = "logos/sub-admins/";
 var bcrypt = require("bcryptjs");
 
 // Create
@@ -9,11 +9,13 @@ exports.addSubadmin = async (req, res) => {
     const hashedPassword = await bcrypt.hash(req.body.password, 10);
     const user = new User({
       ...req.body,
-      companyLogo:req.file.path,
       password: hashedPassword,
       role: "subAdmin",
       managerId: req.userId
     });
+    if(req.file && req.file.path){
+      user.companyLogo = subAdminLogosPath + req.file.filename;
+    }
     await user.save();
     res.status(201).send(user);
   } catch (err) {
@@ -40,7 +42,7 @@ exports.updateSubadmin = async (req, res) => {
       res.status(404).send();
     }
     if(req.file && req.file.path){
-      user.companyLogo = req.file.path;
+      user.companyLogo = subAdminLogosPath + req.file.filename;
     }
     updates.forEach((update) => {
       if (`${req.body[update]}` != "") { // only update if the field exists in the req.body object
