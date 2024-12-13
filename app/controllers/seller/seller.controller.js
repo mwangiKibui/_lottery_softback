@@ -1639,58 +1639,37 @@ async function requestTicketCheck(
          * else, add it as is now.
          */
         let availableAmount = actualmaxAmountPriceBuy;
-        // if (
-        //   actualmaxAmountPriceBuy == item.amount &&
-        //   actualmaxAmountPriceBuy > 0
-        // ) {
-        //   new_numbers.push({
-        //     ...item,
-        //     number:cleanNumber(item.number),
-        //     amount: actualmaxAmountPriceBuy,
-        //     bonus: false,
-        //   });
-        // } else {
-       
-          let duplicateExists = limit_data.find(el => (el.number ==  cleanNumber(item.number) || cleanNumber(el.number) == cleanNumber(alternateNumber)) && el.gameCategory == item.gameCategory);
-          let newNumbersDuplicate = new_numbers.find(el => (el.number ==  cleanNumber(item.number) || cleanNumber(el.number) == cleanNumber(alternateNumber)) && el.gameCategory == item.gameCategory);
-        
-
+        if (
+          actualmaxAmountPriceBuy == item.amount &&
+          actualmaxAmountPriceBuy > 0
+        ) {
+          new_numbers.push({
+            ...item,
+            amount: actualmaxAmountPriceBuy,
+            bonus: false,
+          });
+        } else {
+          let duplicateExists = limit_data.find(el => (el.number ==  cleanNumber(item.number) || el.number == cleanNumber(alternateNumber)) && el.gameCategory == item.gameCategory);
+          
           if(duplicateExists){
-            if(duplicateExists.availableAmount < duplicateExists.expectedAmount){ // did not reach the minimum
+            if(duplicateExists.availableAmount < item.amount){
               availableAmount = 0;
-            }
-            else if(duplicateExists.availableAmount == duplicateExists.expectedAmount){
+            }else if(duplicateExists.availableAmount == item.amount){
               let remainderAmount = actualmaxAmountPriceBuy - duplicateExists.availableAmount;
               availableAmount = remainderAmount;
             }
-          }else if(newNumbersDuplicate){
-            if(newNumbersDuplicate.amount < maxAmountPriceBuy){
-              availableAmount = maxAmountPriceBuy - newNumbersDuplicate.availableAmount;
-            }
-            else if(newNumbersDuplicate.amount == actualmaxAmountPriceBuy){
-              availableAmount = 0;
-            }
           }
-
-          availableAmount = availableAmount > 0 ? availableAmount : 0;
-
-          if (availableAmount > 0)
+          if (actualmaxAmountPriceBuy > 0)
             new_numbers.push({
               ...item,
-              number: cleanNumber(item.number),
               amount: availableAmount,
-              expectedAmount: item.amount,
               bonus: false,
-              availableAmount: availableAmount,
             });
           limit_data.push({
             ...item,
-            amount: availableAmount,
-            expectedAmount: item.amount,
-            number: cleanNumber(item.number),
             availableAmount: availableAmount,
           });
-        // }
+        }
         if (availableAmount > 0) {
           acceptedAmountSum += availableAmount;
         }
