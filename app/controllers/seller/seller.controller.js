@@ -1650,17 +1650,19 @@ async function requestTicketCheck(
         //     bonus: false,
         //   });
         // } else {
-          let duplicateExists = limit_data.find(el => (el.number ==  cleanNumber(item.number) || el.number == cleanNumber(alternateNumber)) && el.gameCategory == item.gameCategory);
-          let newNumbersDuplicate = new_numbers.find(el => (el.number ==  cleanNumber(item.number) || el.number == cleanNumber(alternateNumber)) && el.gameCategory == item.gameCategory);
+       
+          let duplicateExists = limit_data.find(el => (el.number ==  cleanNumber(item.number) || cleanNumber(el.number) == cleanNumber(alternateNumber)) && el.gameCategory == item.gameCategory);
+          let newNumbersDuplicate = new_numbers.find(el => (el.number ==  cleanNumber(item.number) || cleanNumber(el.number) == cleanNumber(alternateNumber)) && el.gameCategory == item.gameCategory);
+          if(cleanNumber(item.number) == '56x23'){
+            console.log("here it is");
+            console.log("duplicateExists",duplicateExists);
+          }
 
           if(duplicateExists){
-            if(duplicateExists.availableAmount < item.amount){
+            if(duplicateExists.availableAmount < duplicateExists.amount){ // did not reach the minimum
               availableAmount = 0;
-            }else if(duplicateExists.amount && !duplicateExists.availableAmount){
-              let remainderAmount = actualmaxAmountPriceBuy - duplicateExists.amount;
-              availableAmount = remainderAmount;
             }
-            else if(duplicateExists.availableAmount == item.amount){
+            else if(duplicateExists.availableAmount == duplicateExists.amount){
               let remainderAmount = actualmaxAmountPriceBuy - duplicateExists.availableAmount;
               availableAmount = remainderAmount;
             }
@@ -1673,17 +1675,19 @@ async function requestTicketCheck(
             }
           }
 
+          availableAmount = availableAmount > 0 ? availableAmount : 0;
 
           if (availableAmount > 0)
             new_numbers.push({
               ...item,
               number: cleanNumber(item.number),
-              amount: availableAmount,
+              amount: item.amount,
               bonus: false,
+              availableAmount: availableAmount,
             });
           limit_data.push({
             ...item,
-            amount: availableAmount,
+            amount: item.amount,
             number: cleanNumber(item.number),
             availableAmount: availableAmount,
           });
