@@ -1111,6 +1111,16 @@ function getAlternateNumber(number,alternateIndex){
   return return_number;
 }
 
+function cleanNumber(number){
+  let new_number = number.replace(/\D+/g, " ").split(" ");
+  if(new_number.length > 1){
+    new_number = new_number.join("x");
+  }else{
+    new_number = new_number[0];
+  }
+  return new_number;
+}
+
 
 // Read
 async function requestTicketCheck(
@@ -1272,7 +1282,8 @@ async function requestTicketCheck(
 
         let subAdminLimitId = null;
         let otherLimitId = null;
-        const numberParts = item.number.split("×");
+
+        const numberParts = item.number.replace(/\D+/g, " ").split(" ");
 
         let alternateNumber = item.number;
         if (numberParts.length > 1) {
@@ -1627,6 +1638,7 @@ async function requestTicketCheck(
          * if it is, do not add it.
          * else, add it as is now.
          */
+
         let availableAmount = actualmaxAmountPriceBuy;
         if (
           actualmaxAmountPriceBuy == item.amount &&
@@ -1634,12 +1646,16 @@ async function requestTicketCheck(
         ) {
           new_numbers.push({
             ...item,
+            number:cleanNumber(item.number),
             amount: actualmaxAmountPriceBuy,
             bonus: false,
           });
         } else {
-          let duplicateExists = limit_data.find(el => (el.number ==  item.number || el.number == alternateNumber || el.number == getAlternateNumber(item.number,1) || el.number == getAlternateNumber(item.number,2) || el.number == getAlternateNumber(alternateNumber,1) || el.number == getAlternateNumber(alternateNumber,2)) && el.gameCategory == item.gameCategory);
-          let newNumbersDuplicate = new_numbers.find(el => (el.number ==  item.number || el.number == alternateNumber || el.number == getAlternateNumber(item.number,1) || el.number == getAlternateNumber(item.number,2) || el.number == getAlternateNumber(alternateNumber,1) || el.number == getAlternateNumber(alternateNumber,2)) && el.gameCategory == item.gameCategory);
+          console.log("limit data ",limit_data);
+          console.log("item data ",item.number);
+          console.log("alternate data ",alternateNumber);
+          let duplicateExists = limit_data.find(el => (el.number ==  cleanNumber(item.number) || el.number == cleanNumber(alternateNumber)) && el.gameCategory == item.gameCategory);
+          let newNumbersDuplicate = new_numbers.find(el => (el.number ==  cleanNumber(item.number) || el.number == cleanNumber(alternateNumber)) && el.gameCategory == item.gameCategory);
 
           if(duplicateExists){
             if(duplicateExists.availableAmount < item.amount){
@@ -1665,11 +1681,13 @@ async function requestTicketCheck(
           if (availableAmount > 0)
             new_numbers.push({
               ...item,
+              number: cleanNumber(item.number),
               amount: availableAmount,
               bonus: false,
             });
           limit_data.push({
             ...item,
+            number: cleanNumber(item.number),
             availableAmount: availableAmount,
           });
         }
