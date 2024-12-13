@@ -1094,14 +1094,21 @@ exports.deleteTicket = async (req, res) => {
 //   }
 // }
 
-function alternateNumber(number,alternateIndex){
-  let left_hand_number = number.split('*')[0];
-  let right_hand_number = number.split('*')[1];
-  if(alternateIndex == 1){
-    return left_hand_number.reverse() + '*' + right_hand_number;
+function getAlternateNumber(number,alternateIndex){
+  let new_number = number.replace("×", " ");
+  let left_hand_number = new_number.toString().split(' ')[0];
+  let right_hand_number = new_number.toString().split(' ')[1];
+  let return_number = '';
+  if(left_hand_number && right_hand_number) {
+    if(alternateIndex == 1){
+      return_number =  [...left_hand_number.toString()].reverse().join('') + '*' + right_hand_number;
+    }else{
+      return_number =  left_hand_number + '*' + [...right_hand_number.toString()].reverse().join('');
+    }
   }else{
-    return left_hand_number + '*' + right_hand_number.reverse();
+    return_number = number;
   }
+  return return_number;
 }
 
 
@@ -1631,8 +1638,8 @@ async function requestTicketCheck(
             bonus: false,
           });
         } else {
-          let duplicateExists = limit_data.find(el => (el.number ==  item.number || el.number == alternateNumber || el.number == alternateNumber(item.number,1) || el.number == alternateNumber(item.number,2) || el.number == alternateNumber(alternateNumber,1) || el.number == alternateNumber(alternateNumber,2)) && el.gameCategory == item.gameCategory);
-          let newNumbersDuplicate = new_numbers.find(el => (el.number ==  item.number || el.number == alternateNumber || el.number == alternateNumber(item.number,1) || el.number == alternateNumber(item.number,2) || el.number == alternateNumber(alternateNumber,1) || el.number == alternateNumber(alternateNumber,2)) && el.gameCategory == item.gameCategory);
+          let duplicateExists = limit_data.find(el => (el.number ==  item.number || el.number == alternateNumber || el.number == getAlternateNumber(item.number,1) || el.number == getAlternateNumber(item.number,2) || el.number == getAlternateNumber(alternateNumber,1) || el.number == getAlternateNumber(alternateNumber,2)) && el.gameCategory == item.gameCategory);
+          let newNumbersDuplicate = new_numbers.find(el => (el.number ==  item.number || el.number == alternateNumber || el.number == getAlternateNumber(item.number,1) || el.number == getAlternateNumber(item.number,2) || el.number == getAlternateNumber(alternateNumber,1) || el.number == getAlternateNumber(alternateNumber,2)) && el.gameCategory == item.gameCategory);
 
           if(duplicateExists){
             if(duplicateExists.availableAmount < item.amount){
