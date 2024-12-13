@@ -1277,7 +1277,6 @@ async function requestTicketCheck(
             maxAmountPriceBuy = maxGameLimit;
           }
         }
-
         // Total limit (subAdmin limit ) amount
         let subAdminLimitsCalcId = null;
         let otherLimitCalcId = null;
