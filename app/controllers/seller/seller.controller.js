@@ -1257,7 +1257,9 @@ async function requestTicketCheck(
           const gameLimitPercent = LimitPercentArray[0]?.limitPercent;
 
           // then check the BLTAmount ka percentage should be greater then the gameCategorryAmount+item.Amount
-          if (gameLimitPercent){
+          if(limitGameCategory == "MRG"){
+            maxGameLimit = gameLimitPercent;
+          }else  if (gameLimitPercent){
             maxGameLimit = Math.floor((gameLimitPercent / 100) * totalBLTAmount);
           }else{
             maxGameLimit = item.amount
