@@ -1101,9 +1101,9 @@ function getAlternateNumber(number,alternateIndex){
   let return_number = '';
   if(left_hand_number && right_hand_number) {
     if(alternateIndex == 1){
-      return_number =  [...left_hand_number.toString()].reverse().join('') + '*' + right_hand_number;
+      return_number =  [...left_hand_number.toString()].reverse().join('') + 'x' + right_hand_number;
     }else{
-      return_number =  left_hand_number + '*' + [...right_hand_number.toString()].reverse().join('');
+      return_number =  left_hand_number + 'x' + [...right_hand_number.toString()].reverse().join('');
     }
   }else{
     return_number = number;
@@ -1687,6 +1687,7 @@ async function requestTicketCheck(
             });
           limit_data.push({
             ...item,
+            amount: availableAmount,
             number: cleanNumber(item.number),
             availableAmount: availableAmount,
           });
