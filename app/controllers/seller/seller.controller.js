@@ -1638,22 +1638,18 @@ async function requestTicketCheck(
          * if it is, do not add it.
          * else, add it as is now.
          */
-
         let availableAmount = actualmaxAmountPriceBuy;
-        if (
-          actualmaxAmountPriceBuy == item.amount &&
-          actualmaxAmountPriceBuy > 0
-        ) {
-          new_numbers.push({
-            ...item,
-            number:cleanNumber(item.number),
-            amount: actualmaxAmountPriceBuy,
-            bonus: false,
-          });
-        } else {
-          console.log("limit data ",limit_data);
-          console.log("item data ",item.number);
-          console.log("alternate data ",alternateNumber);
+        // if (
+        //   actualmaxAmountPriceBuy == item.amount &&
+        //   actualmaxAmountPriceBuy > 0
+        // ) {
+        //   new_numbers.push({
+        //     ...item,
+        //     number:cleanNumber(item.number),
+        //     amount: actualmaxAmountPriceBuy,
+        //     bonus: false,
+        //   });
+        // } else {
           let duplicateExists = limit_data.find(el => (el.number ==  cleanNumber(item.number) || el.number == cleanNumber(alternateNumber)) && el.gameCategory == item.gameCategory);
           let newNumbersDuplicate = new_numbers.find(el => (el.number ==  cleanNumber(item.number) || el.number == cleanNumber(alternateNumber)) && el.gameCategory == item.gameCategory);
 
@@ -1691,7 +1687,7 @@ async function requestTicketCheck(
             number: cleanNumber(item.number),
             availableAmount: availableAmount,
           });
-        }
+        // }
         if (availableAmount > 0) {
           acceptedAmountSum += availableAmount;
         }
