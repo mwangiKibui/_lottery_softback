@@ -4,3 +4,5 @@ yarn.lock
 .env
 docker-compose.yml
 public/logos
+backend.zip
+dist
