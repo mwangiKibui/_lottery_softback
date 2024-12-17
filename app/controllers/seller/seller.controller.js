@@ -1504,7 +1504,7 @@ async function requestTicketCheck(
             remainingQuantitySeller =
               sellerLimit[0]?.limits?.limitsButs - totalSoldBySeller;
           }
-          maxLimitAmount = remainingQuantitySeller;
+          maxLimitAmount = sellerLimit[0]?.limits?.limitsButs;
           // console.log("Line 1493: "+maxAmountPriceBuy,remainingQuantitySubAdmin,remainingQuantitySeller )
           actualmaxAmountPriceBuy = Math.min(
             maxAmountPriceBuy,
