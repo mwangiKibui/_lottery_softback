@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 const moment = require("moment-timezone");
 const config = require("../../config/auth.config");
 const db = require("../../models");
+const {cleanNumber} = require("../../utils");
 const User = db.user;
 const Ticket = db.ticket;
 const WinningNumber = db.winningNumber;
@@ -1093,35 +1094,6 @@ exports.deleteTicket = async (req, res) => {
 //     return { success: false, error: error };
 //   }
 // }
-
-function getAlternateNumber(number,alternateIndex){
-  let new_number = number.replace("×", " ");
-  let left_hand_number = new_number.toString().split(' ')[0];
-  let right_hand_number = new_number.toString().split(' ')[1];
-  let return_number = '';
-  if(left_hand_number && right_hand_number) {
-    if(alternateIndex == 1){
-      return_number =  [...left_hand_number.toString()].reverse().join('') + 'x' + right_hand_number;
-    }else{
-      return_number =  left_hand_number + 'x' + [...right_hand_number.toString()].reverse().join('');
-    }
-  }else{
-    return_number = number;
-  }
-  return return_number;
-}
-
-function cleanNumber(number){
-  let new_number = number.replace(/\D+/g, " ").split(" ");
-  if(new_number.length > 1){
-    new_number = new_number.join("x");
-  }else{
-    new_number = new_number[0];
-  }
-  return new_number;
-}
-
-
 // Read
 async function requestTicketCheck(
   lotteryCategoryName,
@@ -1173,6 +1145,8 @@ async function requestTicketCheck(
             matchedNumbers.add(i);
           }
         }
+
+
         //  if it have supervisor and equal to user's supervisor
         if (
           superVisorId &&
@@ -1256,10 +1230,12 @@ async function requestTicketCheck(
           
           const gameLimitPercent = LimitPercentArray[0]?.limitPercent;
 
+          console.log("the game limit percentage is >>>>>>>>>>", gameLimitPercent);
           // then check the BLTAmount ka percentage should be greater then the gameCategorryAmount+item.Amount
-          if(limitGameCategory == "MRG"){
-            maxGameLimit = gameLimitPercent;
-          }else  if (gameLimitPercent){
+          // if(limitGameCategory == "MRG"){
+          //   maxGameLimit = gameLimitPercent;
+          // }else 
+           if (gameLimitPercent){
             maxGameLimit = Math.floor((gameLimitPercent / 100) * totalBLTAmount);
           }else{
             maxGameLimit = item.amount
@@ -1650,7 +1626,7 @@ async function requestTicketCheck(
             bonus: false,
           });
         } else {
-          let duplicateExists = limit_data.find(el => (el.number ==  cleanNumber(item.number) || el.number == cleanNumber(alternateNumber)) && el.gameCategory == item.gameCategory);
+          let duplicateExists = limit_data.find(el => (cleanNumber(el.number) ==  cleanNumber(item.number) || cleanNumber(el.number) == cleanNumber(alternateNumber)) && el.gameCategory == item.gameCategory);
           
           if(duplicateExists){
             if(duplicateExists.availableAmount < item.amount){
