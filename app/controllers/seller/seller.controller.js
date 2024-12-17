@@ -1350,6 +1350,7 @@ async function requestTicketCheck(
         // finding seller or supervisor remaining amount and the actualAmount to put on a number
         const hasSuperVisorId = !!subAdminInfo?.superVisorId;
         let actualmaxAmountPriceBuy = 0;
+        let maxLimitAmount = 0;
 
         if (hasSuperVisorId) {
           // if it have supervisorId then find the superVisorlimt
@@ -1503,6 +1504,7 @@ async function requestTicketCheck(
             remainingQuantitySeller =
               sellerLimit[0]?.limits?.limitsButs - totalSoldBySeller;
           }
+          maxLimitAmount = remainingQuantitySeller;
           // console.log("Line 1493: "+maxAmountPriceBuy,remainingQuantitySubAdmin,remainingQuantitySeller )
           actualmaxAmountPriceBuy = Math.min(
             maxAmountPriceBuy,
@@ -1616,27 +1618,66 @@ async function requestTicketCheck(
          * else, add it as is now.
          */
         let availableAmount = actualmaxAmountPriceBuy;
+       
         if (
           actualmaxAmountPriceBuy == item.amount &&
           actualmaxAmountPriceBuy > 0
         ) {
-          new_numbers.push({
-            ...item,
-            amount: actualmaxAmountPriceBuy,
-            bonus: false,
-          });
-        } else {
-          let duplicateExists = limit_data.find(el => (cleanNumber(el.number) ==  cleanNumber(item.number) || cleanNumber(el.number) == cleanNumber(alternateNumber)) && el.gameCategory == item.gameCategory);
-          
-          if(duplicateExists){
-            if(duplicateExists.availableAmount < item.amount){
-              availableAmount = 0;
-            }else if(duplicateExists.availableAmount == item.amount){
-              let remainderAmount = actualmaxAmountPriceBuy - duplicateExists.availableAmount;
-              availableAmount = remainderAmount;
+          let duplicateExists = new_numbers.filter(el => (cleanNumber(el.number) ==  cleanNumber(item.number) || cleanNumber(el.number) == cleanNumber(alternateNumber)) && el.gameCategory.toLowerCase() == "mrg");
+
+          if(duplicateExists.length > 0){
+            let duplicatedAmount = duplicateExists.map(item => item.amount).reduce((amount, item) => amount + item);
+            let remainderAmount = maxLimitAmount - duplicatedAmount;
+            let netAmount = 0;
+            if(remainderAmount > 0){
+              if(remainderAmount <= item.amount){
+                netAmount = remainderAmount;
+              }else{
+                netAmount = item.amount;
+              }
             }
+
+            if(netAmount > 0){
+              new_numbers.push({
+                ...item,
+                amount: netAmount,
+                bonus: false,
+              });
+            }
+            limit_data.push({
+              ...item,
+              availableAmount: netAmount,
+            });
+
+          }else{
+            new_numbers.push({
+              ...item,
+              amount: actualmaxAmountPriceBuy,
+              bonus: false,
+            });
           }
-          if (actualmaxAmountPriceBuy > 0)
+        } else {
+          let duplicateExists = limit_data.filter(el => (cleanNumber(el.number) ==  cleanNumber(item.number) || cleanNumber(el.number) == cleanNumber(alternateNumber)) && el.gameCategory == item.gameCategory);
+          
+          if(duplicateExists.length){
+            let duplicatedAmount = duplicateExists.map(item => item.amount).reduce((amount,item) => amount + item.amount);
+            let remainderAmount = maxLimitAmount - duplicatedAmount;
+            if(remainderAmount > 0){
+              if(remainderAmount <= item.amount){
+                availableAmount = remainderAmount;
+              }else{
+                availableAmount = item.amount;
+              }
+            }
+
+            // if(duplicateExists.availableAmount < item.amount){
+            //   availableAmount = 0;
+            // }else if(duplicateExists.availableAmount == item.amount){
+            //   let remainderAmount = actualmaxAmountPriceBuy - duplicateExists.availableAmount;
+            //   availableAmount = remainderAmount;
+            // }
+          }
+          if (availableAmount > 0)
             new_numbers.push({
               ...item,
               amount: availableAmount,

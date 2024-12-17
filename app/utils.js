@@ -1,5 +1,5 @@
 exports.cleanNumber = (number) => {
-    let new_number = number.replace(/\D+/g, " ").split(" ");
+    let new_number = number.trim().replace(/\D+/g, " ").split(" ");
     if(new_number.length > 1){
       new_number = new_number.join("x");
     }else{
