@@ -1626,6 +1626,10 @@ async function requestTicketCheck(
 
           if(duplicateExists.length > 0){
             let duplicatedAmount = duplicateExists.map(item => item.amount).reduce((amount, item) => amount + item);
+            if(cleanNumber(item.number) == '36x72'){
+              console.log("duplicated amount ",duplicatedAmount);
+              console.log("max limit amount ",maxLimitAmount);
+            }
             let remainderAmount = maxLimitAmount - duplicatedAmount;
             let netAmount = 0;
             if(remainderAmount > 0){
@@ -1660,6 +1664,10 @@ async function requestTicketCheck(
           
           if(duplicateExists.length){
             let duplicatedAmount = duplicateExists.map(item => item.amount).reduce((amount,item) => amount + item.amount);
+            if(cleanNumber(item.number) == '36x72'){
+              console.log("duplicated amount ",duplicatedAmount);
+              console.log("max limit amount ",maxLimitAmount);
+            }
             let remainderAmount = maxLimitAmount - duplicatedAmount;
             if(remainderAmount > 0){
               if(remainderAmount <= item.amount){
