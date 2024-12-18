@@ -1514,11 +1514,10 @@ async function requestTicketCheck(
         }
 
         let sellerTickets = await db.ticket.find({
-          seller: sellerId,
           lotteryCategoryName: lotteryCategoryName,
           numbers:{
             $elemMatch:{
-              number: { $in: [cleanNumber(item.number), cleanNumber(alternateNumber)] }
+              number: { $in: [cleanNumber(item.number)] }
             }
           }
         });
@@ -1629,8 +1628,18 @@ async function requestTicketCheck(
          */
         let availableAmount = 0;
         if(sellerTickets.length > 0){
-          availableAmount = 0;
-          actualmaxAmountPriceBuy = 0;
+          let soldAmount = 0;
+          for(let i = 0; i < sellerTickets.length; i++){
+            let numbers = sellerTickets[i].numbers.filter(num => num.number == cleanNumber(item.number)).map(num => num.amount);
+            let numberAmount = numbers.reduce((amount, num) => amount + num);
+            if(numberAmount){
+              soldAmount += numberAmount;
+            }
+          }
+
+          let remainderAmount = actualmaxAmountPriceBuy - soldAmount;
+          availableAmount = remainderAmount > 0 ? remainderAmount : 0;
+          actualmaxAmountPriceBuy = remainderAmount > 0 ? remainderAmount : 0;
         }else{
           availableAmount = actualmaxAmountPriceBuy;
         }
