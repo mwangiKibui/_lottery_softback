@@ -1513,6 +1513,16 @@ async function requestTicketCheck(
           );
         }
 
+        let sellerTickets = await db.ticket.find({
+          seller: sellerId,
+          lotteryCategoryName: lotteryCategoryName,
+          numbers:{
+            $elemMatch:{
+              number: { $in: [cleanNumber(item.number), cleanNumber(alternateNumber)] }
+            }
+          }
+        });
+
         // console.log(actualmaxAmountPriceBuy)
         // console.log(item)
         // console.log("subAdminLimitsCalcId",subAdminLimitsCalcId)
@@ -1610,27 +1620,28 @@ async function requestTicketCheck(
             await newLimit.save();
           }
         }
+
         /** 
          * confirm if there is a record in new numbers that shares the same number.
          * if there is, check if the item amount is greater than the available amount.
          * if it is, do not add it.
          * else, add it as is now.
          */
-        let availableAmount = actualmaxAmountPriceBuy;
-       
+        let availableAmount = 0;
+        if(sellerTickets.length > 0){
+          availableAmount = 0;
+          actualmaxAmountPriceBuy = 0;
+        }else{
+          availableAmount = actualmaxAmountPriceBuy;
+        }
         if (
           actualmaxAmountPriceBuy == item.amount &&
           actualmaxAmountPriceBuy > 0
         ) {
           let duplicateExists = new_numbers.filter(el => (cleanNumber(el.number) ==  cleanNumber(item.number) || cleanNumber(el.number) == cleanNumber(alternateNumber)) && el.gameCategory.toLowerCase() == "mrg");
-
           if(duplicateExists.length > 0){
             let duplicatedAmount = duplicateExists.map(item => item.amount).reduce((amount, item) => amount + item);
-            if(cleanNumber(item.number) == '36x72'){
-              console.log("duplicated amount ",duplicatedAmount);
-              console.log("max limit amount ",maxLimitAmount);
-            }
-            let remainderAmount = maxLimitAmount - duplicatedAmount;
+            let remainderAmount = actualmaxAmountPriceBuy - duplicatedAmount;
             let netAmount = 0;
             if(remainderAmount > 0){
               if(remainderAmount <= item.amount){
@@ -1661,14 +1672,12 @@ async function requestTicketCheck(
           }
         } else {
           let duplicateExists = limit_data.filter(el => (cleanNumber(el.number) ==  cleanNumber(item.number) || cleanNumber(el.number) == cleanNumber(alternateNumber)) && el.gameCategory == item.gameCategory);
-          
+          if(duplicateExists.length == 0){
+            duplicateExists = new_numbers.filter(el => (cleanNumber(el.number) ==  cleanNumber(item.number) || cleanNumber(el.number) == cleanNumber(alternateNumber)) && el.gameCategory.toLowerCase() == "mrg");
+          }
           if(duplicateExists.length){
             let duplicatedAmount = duplicateExists.map(item => item.amount).reduce((amount,item) => amount + item.amount);
-            if(cleanNumber(item.number) == '36x72'){
-              console.log("duplicated amount ",duplicatedAmount);
-              console.log("max limit amount ",maxLimitAmount);
-            }
-            let remainderAmount = maxLimitAmount - duplicatedAmount;
+            let remainderAmount = actualmaxAmountPriceBuy - duplicatedAmount;
             if(remainderAmount > 0){
               if(remainderAmount <= item.amount){
                 availableAmount = remainderAmount;
@@ -1698,6 +1707,7 @@ async function requestTicketCheck(
         if (availableAmount > 0) {
           acceptedAmountSum += availableAmount;
         }
+
       }
     }
 
