@@ -1,4 +1,7 @@
 const mongoose = require("mongoose");
+const moment = require("moment");
+
+const currentDate = moment().format("yyyy-MM-DD");
 
 // Define the Limits schema
 const limitsCalcSchema = new mongoose.Schema(
@@ -7,6 +10,10 @@ const limitsCalcSchema = new mongoose.Schema(
     limitId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Limits",
+    },
+    date:{
+      type:String,
+      default: currentDate
     },
     soldState: {
       type: [

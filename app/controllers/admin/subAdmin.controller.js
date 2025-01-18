@@ -13,6 +13,9 @@ exports.addSubadmin = async (req, res) => {
       role: "subAdmin",
       managerId: req.userId
     });
+    if(req.file && req.file.path){
+      user.companyLogo = subAdminLogosPath + req.file.filename;
+    }
     await user.save();
     res.status(201).send(user);
   } catch (err) {
@@ -46,6 +49,9 @@ exports.updateSubadmin = async (req, res) => {
     
     if (req.body.password) {
       user.password = await bcrypt.hash(req.body.password, 10);
+    }
+    if(req.file && req.file.path){
+      user.companyLogo = subAdminLogosPath + req.file.filename;
     }
 
     await user.save();
