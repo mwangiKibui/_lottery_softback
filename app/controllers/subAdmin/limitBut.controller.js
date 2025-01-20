@@ -81,12 +81,21 @@ exports.addLimitBut = async (req, res) => {
 //Now it is for all 
 exports.getLimitButAll = async (req, res) => {
   try {
-    let limits=null
-    limits = await LimitBut.find({
-    subAdmin: req.userId,
-    superVisor: { $exists: false }, // Ensure superVisor does not exist
-    seller: { $exists: false } // Ensure seller does not exist
-  })
+
+    let limits = null;
+    let {lotteryCategoryName} = req.query;
+
+    let allQuery = {
+      subAdmin: req.userId,
+      superVisor: { $exists: false }, // Ensure superVisor does not exist
+      seller: { $exists: false } // Ensure seller does not exist
+    };
+
+    if(lotteryCategoryName){
+      allQuery.lotteryCategoryName = lotteryCategoryName;
+    }
+
+    limits = await LimitBut.find(allQuery);
 
     res.json(limits);
   } catch (err) {

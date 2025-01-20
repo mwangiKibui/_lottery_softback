@@ -1,4 +1,5 @@
 const db = require("../../models");
+const subAdminLogosPath = "logos/sub-admins/";
 const User = db.user;
 
 var bcrypt = require("bcryptjs");
@@ -57,6 +58,7 @@ exports.updateSubadmin = async (req, res) => {
     await user.save();
     res.send(user);
   } catch (err) {
+    console.log('error', err);
     res.status(400).send(err);
   }
 };

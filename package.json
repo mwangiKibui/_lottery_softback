@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "webpack",
-    "dev":"nodemon ./http/server.js",
+    "dev": "nodemon ./http/server.js",
     "start": "node ./http/server.js"
   },
   "keywords": [
@@ -42,6 +42,7 @@
     "mongodb-client-encryption": "^2.8.0",
     "mongoose": "^5.13.13",
     "mongoose-auto-increment": "^5.0.1",
+    "multer": "^1.4.5-lts.1",
     "net-browserify": "^0.2.4",
     "node-cache": "^5.1.2",
     "node-cron": "^3.0.2",

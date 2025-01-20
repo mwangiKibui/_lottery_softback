@@ -21,7 +21,7 @@ exports.readWinningNumber = async (req, res) => {
     let winningNumber = null;
     if( lotteryCategoryName == "" ) {
       winningNumber = await WinningNumber.find({
-        date: {$gte: fromDate, $lte: toDate}
+        date: {$gte: new Date(fromDate), $lte: new Date(toDate)}
       });
     } else {
       winningNumber = await WinningNumber.find({
@@ -30,12 +30,12 @@ exports.readWinningNumber = async (req, res) => {
       });
     }
     if (winningNumber.length == 0) {
-      return res.send({ success: false, message: "Winning number not found" });
+      return res.json({ success: false, message: "Winning number not found" });
     }
-    res.send({ success: true, data: winningNumber});
+    return res.json({ success: true, data: winningNumber});
   } catch (err) {
-    console.log(err.message);
-    res.send({ success: false, message: "Server error" });
+    console.log("an error on reading winning number ",err.message);
+    return res.json({ success: false, message: "Server error" });
   }
 };
 

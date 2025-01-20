@@ -51,6 +51,7 @@ const userSchema = new mongoose.Schema(
       default: false
     },
     companyName: String,
+    companyLogo: String,
     address: String,
     phoneNumber: String,
     logoUrl: String,
