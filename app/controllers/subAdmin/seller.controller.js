@@ -43,6 +43,8 @@ exports.updateseller = async (req, res) => {
       if (`${req.body[update]}` != "") {
         // only update if the field exists in the req.body object
         user[update] = req.body[update];
+      }else if(update == "superVisorName" && req.body[update] == ""){
+        user[update] = "";
       }
     });
     if (req.body.password) {
