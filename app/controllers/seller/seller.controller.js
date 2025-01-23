@@ -141,6 +141,7 @@ exports.newTicket = async (req, res) => {
               message: "success",
               ticketId: newId,
               numbers: new_numbers,
+              lotteryCategoryName,
               limit_data,
               block_data,
             }));
