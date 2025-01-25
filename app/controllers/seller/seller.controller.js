@@ -783,8 +783,8 @@ async function requestTicketCheck(
     const limit_data = [];
     const new_numbers = [];
     let acceptedAmountSum = 0;
-    // const currentDate = moment().tz(haitiTimezone).format("yyyy-MM-DD");
-    const currentDate = moment().format("yyyy-MM-DD");
+    const currentDate = moment().tz(haitiTimezone).format("yyyy-MM-DD");
+    // const currentDate = moment().format("yyyy-MM-DD");
 
     let totalBLTAmount = 0;
 
