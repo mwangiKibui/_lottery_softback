@@ -9,7 +9,7 @@ exports.getSaleReports = async (req, res) => {
     const fromDate = req.query.fromDate;
     const toDate = req.query.toDate;
     const lotteryCategoryName = req.query.lotteryCategoryName;
-    const supervisorId = req.query.supervisor;
+    const supervisorId = req.query.supervisor ? req.query.supervisor : req.user._id;
     let subAdminId = req.user.subAdminId;
 
     const query = [];

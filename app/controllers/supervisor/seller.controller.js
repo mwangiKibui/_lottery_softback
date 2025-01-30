@@ -12,6 +12,7 @@ exports.addseller = async (req, res) => {
       password: hashedPassword,
       role: "seller",
       superVisorName: req.user.userName,
+      companyName: req.user.companyName
     });
     await user.save();
     res.status(201).send(user);
