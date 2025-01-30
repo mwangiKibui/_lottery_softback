@@ -66,6 +66,7 @@ exports.updatesuperVisor = async (req, res) => {
     if (req.body.password) {
       user.password = await bcrypt.hash(req.body.password, 10);
     }
+    user.companyName = req.user.companyName;
 
     await user.save();
     res.send(user);
