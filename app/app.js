@@ -21,6 +21,13 @@ const reports = require("./routes/subAdmin/reports.routes");
 const sellerRoutes = require("./routes/seller/seller.routes");
 const subadminWinNumberRoutes = require("./routes/subAdmin/winNumber.routes");
 const PercentageLimit = require("./routes/subAdmin/PercentageLimit.routes");
+const supervisorLimitButRoutes = require("./routes/supervisor/limitBut.routes");
+const supervisorPaymentTermRoutes = require("./routes/supervisor/paymentTerm.routes");
+const supervisorPercentageLimitRoutes = require("./routes/supervisor/percentageLimit.routes");
+const supervisorReportsRoutes = require("./routes/supervisor/reports.routes");
+const supervisorSellerRoutes = require("./routes/supervisor/seller.routes");
+const supervisorTicketRoutes = require("./routes/supervisor/ticket.routes");
+const supervisorWinNumberRoutes = require("./routes/supervisor/winNumber.routes");
 
 const compression = require('compression');
 const zlib = require('zlib');
@@ -192,6 +199,13 @@ reports(app);
 sellerRoutes(app);
 subadminWinNumberRoutes(app);
 PercentageLimit(app);
+supervisorLimitButRoutes(app);
+supervisorPaymentTermRoutes(app);
+supervisorPercentageLimitRoutes(app);
+supervisorReportsRoutes(app);
+supervisorSellerRoutes(app);
+supervisorTicketRoutes(app);
+supervisorWinNumberRoutes(app);
 
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {

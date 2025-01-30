@@ -7,6 +7,10 @@ const paymentTermSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    superVisor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     // The name of the lottery category for which the payment term applies
     lotteryCategoryName: {
       type: String,

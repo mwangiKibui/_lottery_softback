@@ -22,7 +22,14 @@ verifyToken = (req, res, next) => {
       return;
     }
     req.userId = decoded.id;
-    next();
+    User.findById(decoded.id).exec((err, user) => {
+      if (err) {
+        res.status(401).send({success: false, message: "Unknown identity!" });
+        return;
+      }
+      req.user = user;
+      next();
+    });
   });
 };
 
