@@ -70,9 +70,9 @@ exports.sendMessage = async (req, res) => {
         return res.status(400).json({ message: 'No file uploaded' });
       }
       if(type == 'file'){
-        content = 'files/sub-admins/'+req.file.filename;
+        content = 'chat/'+req.file.filename;
       }else if(type == 'voice'){
-        content = 'voices/sub-admins/'+req.file.filename;
+        content = 'chat/'+req.file.filename;
       }
     }
   
