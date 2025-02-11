@@ -4,3 +4,4 @@ yarn.lock
 .env
 Archive.zip
 public
+DS_Store
