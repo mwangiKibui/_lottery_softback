@@ -19,7 +19,7 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-  const allowedTypes = ['image/jpeg', 'image/png', 'audio/mpeg', 'audio/wav','audio/wave', 'application/pdf'];
+  const allowedTypes = ['image/jpeg', 'image/png', 'audio/mpeg', 'audio/wav','audio/wave', 'application/pdf','audio/x-m4a','audio/m4a','audio/mp4'];
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
