@@ -17,8 +17,8 @@ httpServer.listen(PORT, () => {
   console.log(`HTTP server is running on port ${PORT}.`);
 });
 
-https.createServer(options, app).listen(443, () => {
-  console.log('HTTPS Server running on port 443');
+https.createServer(options, app).listen(PORT, () => {
+  console.log('HTTPS Server running on port '+PORT);
 });
 
 module.exports = httpServer;
