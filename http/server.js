@@ -6,6 +6,7 @@ const app = require("../app/app");
 
 const httpServer = http.createServer(app);
 const PORT = process.env.PORT || 8080;
+const HTTPS_PORT = 8081;
 
 // ssl configuration.
 const options = {
@@ -17,8 +18,8 @@ httpServer.listen(PORT, () => {
   console.log(`HTTP server is running on port ${PORT}.`);
 });
 
-https.createServer(options, app).listen(PORT, () => {
-  console.log('HTTPS Server running on port '+PORT);
+https.createServer(options, app).listen(HTTPS_PORT, () => {
+  console.log('HTTPS Server running on port '+HTTPS_PORT);
 });
 
 module.exports = httpServer;
