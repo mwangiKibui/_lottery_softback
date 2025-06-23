@@ -1,0 +1,52 @@
+name: Deploy Backend to VPC (Lottery Soft)
+
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install zip and sshpass
+        run: sudo apt-get update && sudo apt-get install -y zip sshpass
+
+      - name: Create deployment ZIP
+        run: |
+          mkdir deploy
+          zip -r deploy/backend.zip \
+            app \
+            http \
+            socket \
+            index.js \
+            package.json \
+            yarn.lock 
+
+      - name: Upload ZIP to VPC
+        run: |
+          sshpass -p "${{ secrets.VPC_PASSWORD }}" scp -o StrictHostKeyChecking=no \
+            deploy/backend.zip \
+            ${{ secrets.VPC_USERNAME }}@${{ secrets.VPC_HOST }}:/tmp/backend.zip
+
+      - name: SSH into VPC and deploy (preserve public/)
+        run: |
+          sshpass -p "${{ secrets.VPC_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.VPC_USERNAME }}@${{ secrets.VPC_HOST }} << 'EOF'
+            # Setup temp dir
+            rm -rf /var/www/lotterysoft/lotterysoftbackend_temp
+            mkdir -p /var/www/lotterysoft/lotterysoftbackend_temp
+
+            # Unzip into temp dir
+            unzip /tmp/backend.zip -d /var/www/lotterysoft/lotterysoftbackend_temp
+
+            # Copy contents EXCEPT public/ to main dir
+            rsync -av --exclude=public/ /var/www/lotterysoft/lotterysoftbackend_temp/ /var/www/lotterysoft/LotterySoft_backend/
+
+            # Install dependencies & restart app
+            cd /var/www/lotterysoft/LotterySoft_backend
+            yarn install
+            pm2 restart index
+          EOF
