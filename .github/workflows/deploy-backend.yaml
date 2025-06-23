@@ -33,6 +33,7 @@ jobs:
             ${{ secrets.VPC_USERNAME }}@${{ secrets.VPC_HOST }}:/tmp/backend.zip
 
       - name: SSH into VPC and deploy (preserve public/)
+        if: github.event_name == 'push'
         run: |
           sshpass -p "${{ secrets.VPC_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.VPC_USERNAME }}@${{ secrets.VPC_HOST }} << 'EOF'
             # Setup temp dir
