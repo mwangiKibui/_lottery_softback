@@ -38,6 +38,9 @@ jobs:
         if: github.event_name == 'push'
         run: |
           sshpass -p "${{ secrets.VPC_PASSWORD }}" ssh -o StrictHostKeyChecking=no ${{ secrets.VPC_USERNAME }}@${{ secrets.VPC_HOST }} << 'EOF'
+            
+            export PATH=$PATH:/home/administrator/.nvm/versions/node/v20.18.1/bin
+
             # Setup temp dir
             rm -rf /var/www/lotterysoft/lotterysoftbackend_temp
             mkdir -p /var/www/lotterysoft/lotterysoftbackend_temp
