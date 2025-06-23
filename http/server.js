@@ -8,6 +8,8 @@ const httpServer = http.createServer(app);
 const PORT = process.env.PORT || 8080;
 const HTTPS_PORT = process.env.HTTPS_PORT || 8081;
 
+console.log("Kennedy the hard working Devops dev");
+
 // ssl configuration.
 const options = {
   key: fs.existsSync('/etc/letsencrypt/live/lotterysoft.net/privkey.pem') ? fs.readFileSync('/etc/letsencrypt/live/lotterysoft.net/privkey.pem') : null,
