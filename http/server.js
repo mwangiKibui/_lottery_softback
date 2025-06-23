@@ -6,7 +6,7 @@ const app = require("../app/app");
 
 const httpServer = http.createServer(app);
 const PORT = process.env.PORT || 8080;
-const HTTPS_PORT = 8081;
+const HTTPS_PORT = process.env.HTTPS_PORT || 8081;
 
 // ssl configuration.
 const options = {
