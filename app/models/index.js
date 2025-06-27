@@ -17,5 +17,6 @@ db.limitCalc = require("./limitsCalc.model");
 db.specificLimits = require("./specificLimits.model");
 db.PercentageLimit = require("./PercentageLimit.model");
 db.message = require("./message.model");
+db.paymentAlert = require("./paymentAlert.model");
 
 module.exports = db;
