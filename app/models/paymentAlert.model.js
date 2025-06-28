@@ -8,7 +8,8 @@ const paymentAlertModel = new mongoose.Schema(
       ref: "User",
     },
     company: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       required: true,
     },
     message:{
