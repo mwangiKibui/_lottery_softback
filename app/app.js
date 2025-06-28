@@ -32,7 +32,7 @@ const supervisorSellerRoutes = require("./routes/supervisor/seller.routes");
 const supervisorTicketRoutes = require("./routes/supervisor/ticket.routes");
 const supervisorWinNumberRoutes = require("./routes/supervisor/winNumber.routes");
 const paymentAlertAdminRoutes = require("./routes/admin/paymentAlert.routes");
-const paymentAlertsubAdminRoutes = require("./routes/admin/paymentAlert.routes");
+const paymentAlertsubAdminRoutes = require("./routes/subAdmin/paymentAlert.routes");
 
 const compression = require('compression');
 const zlib = require('zlib');
