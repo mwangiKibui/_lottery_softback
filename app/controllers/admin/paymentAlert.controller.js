@@ -17,11 +17,16 @@ exports.addPaymentAlert = async (req, res) => {
 
 exports.listPaymentAlert = async (req, res) => {
   try {
-    const paymentAlerts = await PaymentAlert.find(
+    let paymentAlerts = await PaymentAlert.find(
         {
             admin:req.user.id
         }
-    );
+    ).populate('company','companyName')
+    .lean();
+    paymentAlerts = paymentAlerts.map((alert) => ({
+        ...alert,
+        company:alert.company.companyName
+    }))
     res.send({success: true, data: paymentAlerts});
   } catch (error) {
     res.status(400).send({ error: error.message });

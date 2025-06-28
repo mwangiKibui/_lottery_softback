@@ -32,6 +32,7 @@ const supervisorSellerRoutes = require("./routes/supervisor/seller.routes");
 const supervisorTicketRoutes = require("./routes/supervisor/ticket.routes");
 const supervisorWinNumberRoutes = require("./routes/supervisor/winNumber.routes");
 const paymentAlertAdminRoutes = require("./routes/admin/paymentAlert.routes");
+const paymentAlertsubAdminRoutes = require("./routes/admin/paymentAlert.routes");
 
 const compression = require('compression');
 const zlib = require('zlib');
@@ -213,6 +214,7 @@ supervisorSellerRoutes(app);
 supervisorTicketRoutes(app);
 supervisorWinNumberRoutes(app);
 paymentAlertAdminRoutes(app);
+paymentAlertsubAdminRoutes(app);
 
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
