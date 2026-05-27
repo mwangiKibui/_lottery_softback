@@ -23,10 +23,20 @@ exports.addSubadmin = async (req, res) => {
   }
 };
 
-// Read
+// Read (active only)
 exports.getSubadmin = async (req, res) => {
   try {
-    const users = await User.find({ managerId: req.userId, role: 'subAdmin' });
+    const users = await User.find({ managerId: req.userId, role: 'subAdmin', isDelete: { $ne: true } });
+    res.send(users);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+};
+
+// Read deleted sub-admins
+exports.getDeletedSubadmins = async (req, res) => {
+  try {
+    const users = await User.find({ managerId: req.userId, role: 'subAdmin', isDelete: true });
     res.send(users);
   } catch (err) {
     res.status(500).send(err);
@@ -61,10 +71,32 @@ exports.updateSubadmin = async (req, res) => {
   }
 };
 
-// Delete
+// Soft-delete (mark isDelete: true)
 exports.deleteSubadmin = async (req, res) => {
   try {
-    const user = await User.findByIdAndDelete(req.params.id);
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { isDelete: true },
+      { new: true }
+    );
+    if (!user) {
+      res.status(404).send();
+      return;
+    }
+    res.send(user);
+  } catch (err) {
+    res.status(500).send(err);
+  }
+};
+
+// Restore soft-deleted sub-admin
+exports.restoreSubadmin = async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { isDelete: false },
+      { new: true }
+    );
     if (!user) {
       res.status(404).send();
       return;

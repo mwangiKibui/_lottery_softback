@@ -55,6 +55,14 @@ const userSchema = new mongoose.Schema(
     address: String,
     phoneNumber: String,
     logoUrl: String,
+    note: {
+      type: String,
+      default: '',
+    },
+    isDelete: {
+      type: Boolean,
+      default: false,
+    },
     role: {
       type: String,
       enum: ["admin", "subAdmin", "superVisor", "seller"],

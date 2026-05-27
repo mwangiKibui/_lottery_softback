@@ -31,10 +31,24 @@ module.exports = function (app) {
     controller.updateSubadmin
   );
 
-  // Delete Sub Admin
+  // Delete Sub Admin (soft)
   app.delete(
     "/api/admin/deletesubadmin/:id",
     [authJwt.verifyToken, authJwt.isAdmin],
     controller.deleteSubadmin
+  );
+
+  // Get deleted sub-admins
+  app.get(
+    "/api/admin/getdeletedsubadmin",
+    [authJwt.verifyToken, authJwt.isAdmin],
+    controller.getDeletedSubadmins
+  );
+
+  // Restore soft-deleted sub-admin
+  app.patch(
+    "/api/admin/restoresubadmin/:id",
+    [authJwt.verifyToken, authJwt.isAdmin],
+    controller.restoreSubadmin
   );
 };
