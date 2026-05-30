@@ -181,37 +181,34 @@ exports.getPercentageLimitButSuperVisor = async (req, res) => {
 // Update
 exports.updatePercentageLimitBut = async (req, res) => {
   const { id } = req.params;
-  const { lotteryCategoryName, limits, seller, general } = req.body;
+  const { lotteryCategoryName, limits, seller, superVisor } = req.body;
 
   try {
-    let limit = null;
-   
-      limit = await LimitBut.findById(id);
-
-
+    const limit = await LimitBut.findById(id);
 
     if (!limit) {
       return res.status(404).json({ message: "Limit not found" });
     }
 
-    limit.lotteryCategoryName = lotteryCategoryName;
-    limit.limits = limits;
+    if (lotteryCategoryName !== undefined) limit.lotteryCategoryName = lotteryCategoryName;
+    if (limits            !== undefined) limit.limits = limits;
 
-    if (seller == "") {
-      limit.seller = null;
-    } else {
-      limit.seller = seller;
+    // seller: empty string → clear, string id → set, undefined → leave unchanged
+    if (seller !== undefined) {
+      limit.seller = seller === "" || seller === null ? null : seller;
+    }
+    if (superVisor !== undefined) {
+      limit.superVisor = superVisor === "" || superVisor === null ? null : superVisor;
     }
 
-    limit = await limit.save();
+    await limit.save();
 
-    
-      limit = await LimitBut.findById(id).populate("seller");
-    
+    const populated = await LimitBut.findById(id)
+      .populate('seller',     'userName')
+      .populate('superVisor', 'userName');
 
-    res.json(limit);
+    res.json(populated);
   } catch (err) {
-    // console.error(err);
     res.status(500).json({ message: "Server Error" });
   }
 };

@@ -3,101 +3,145 @@ const db = require("../../models");
 const Ticket = db.ticket;
 const User = db.user;
 const Limit = db.limits;
+const PaymentTerm = db.paymentTerm;
 
 exports.getSaleReports = async (req, res) => {
   try {
-    const fromDate = req.query.fromDate;
-    const toDate = req.query.toDate;
-    const lotteryCategoryName = req.query.lotteryCategoryName;
-    const seller = req.query.seller;
+    const fromDate   = req.query.fromDate   || '';
+    const toDate     = req.query.toDate     || '';
+    const supervisor = req.query.supervisor || '';
+    const seller     = req.query.seller     || '';
+    const lotteryCategoryName = req.query.lotteryCategoryName || '';
     const subAdminId = mongoose.Types.ObjectId(req.userId);
 
-    const query = [];
-    query.push({ $eq: ["$lotteryCategoryName", "$$lotteryCategoryName"] });
-    query.push({ $eq: ["$date", "$$date"] });
+    // Fix date-range bug: include the full toDate day
+    const from = new Date(fromDate);
+    const to   = new Date(toDate);
+    to.setUTCHours(23, 59, 59, 999);
 
-    let seller_query = null;
-    let sellerIds = [];
-    if (seller == "") {
-      const sellers = await User.find({ subAdminId: subAdminId }, { _id: 1 });
-      sellerIds = sellers.map((item) => item._id);
-      seller_query = { $in: sellerIds };
-    } else {
+    // Support comma-separated lottery names (multi-select checkboxes)
+    const lotteryFilter = lotteryCategoryName
+      ? lotteryCategoryName.split(',').map(s => s.trim()).filter(Boolean)
+      : [];
+
+    // Build seller filter
+    let seller_query;
+    if (seller !== '') {
       seller_query = mongoose.Types.ObjectId(seller);
+    } else if (supervisor !== '') {
+      const supervisorUser = await User.findById(supervisor, { userName: 1 });
+      if (!supervisorUser) return res.send({ success: true, data: {} });
+      const sellers = await User.find(
+        { subAdminId, role: 'seller', superVisorName: supervisorUser.userName },
+        { _id: 1 }
+      );
+      if (!sellers.length) return res.send({ success: true, data: {} });
+      seller_query = { $in: sellers.map(s => s._id) };
+    } else {
+      const sellers = await User.find({ subAdminId, role: 'seller' }, { _id: 1 });
+      seller_query = { $in: sellers.map(s => s._id) };
     }
 
-    const matchStage = {
-      $match: {
-        date: { $gte: new Date(fromDate), $lte: new Date(toDate) },
-        seller: seller_query,
-        isDelete: false
-      },
+    const matchFilter = {
+      date: { $gte: from, $lte: to },
+      seller: seller_query,
+      isDelete: false,
+    };
+    if (lotteryFilter.length > 0) {
+      matchFilter.lotteryCategoryName = { $in: lotteryFilter };
+    }
+
+    // Fetch all active + historical payment terms for versioning lookup
+    const allPaymentTerms = await PaymentTerm.find({ subAdmin: subAdminId });
+
+    // Build seller → supervisorId map (for payment term priority: seller > supervisor > all)
+    const allSellers    = await User.find({ subAdminId, role: 'seller' },    { _id: 1, superVisorName: 1 });
+    const allSupervisors = await User.find({ subAdminId, role: 'superVisor' }, { _id: 1, userName: 1 });
+    const supNameToId = {};
+    allSupervisors.forEach(s => { supNameToId[s.userName] = s._id.toString(); });
+    const sellerToSupId = {};
+    allSellers.forEach(s => {
+      if (s.superVisorName && supNameToId[s.superVisorName]) {
+        sellerToSupId[s._id.toString()] = supNameToId[s.superVisorName];
+      }
+    });
+
+    // Find the correct payment term for a ticket (versioning-aware, priority-aware)
+    const findPaymentTerm = (sellerId, lotteryName, ticketDate) => {
+      const isEffective = (term) => {
+        if (term.effectiveFrom && term.effectiveFrom > ticketDate) return false;
+        if (term.effectiveUntil && term.effectiveUntil < ticketDate) return false;
+        return true;
+      };
+      const sid = sellerId ? sellerId.toString() : null;
+
+      // 1. Seller-specific term
+      if (sid) {
+        const t = allPaymentTerms.find(t =>
+          t.seller && t.seller.toString() === sid &&
+          t.lotteryCategoryName === lotteryName &&
+          isEffective(t)
+        );
+        if (t) return t;
+      }
+
+      // 2. Supervisor-specific term
+      const supId = sid ? sellerToSupId[sid] : null;
+      if (supId) {
+        const t = allPaymentTerms.find(t =>
+          t.superVisor && t.superVisor.toString() === supId &&
+          !t.seller &&
+          t.lotteryCategoryName === lotteryName &&
+          isEffective(t)
+        );
+        if (t) return t;
+      }
+
+      // 3. SubAdmin-level term
+      return allPaymentTerms.find(t =>
+        !t.seller && !t.superVisor &&
+        t.lotteryCategoryName === lotteryName &&
+        isEffective(t)
+      ) || null;
     };
 
-    if (lotteryCategoryName !== "") {
-      query.push({ $eq: ["$lotteryCategoryName", lotteryCategoryName] });
-      matchStage.$match.lotteryCategoryName = lotteryCategoryName;
-    }
-
     const result = await Ticket.aggregate([
-      matchStage,
+      { $match: matchFilter },
       {
         $lookup: {
-          from: "paymentterms",
-          let: {
-            lotteryCategoryName: "$lotteryCategoryName",
-            subAdmin: "$subAdmin",
-          },
+          from: 'winningnumbers',
+          let: { lotteryCategoryName: '$lotteryCategoryName', date: '$date' },
           pipeline: [
             {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ["$lotteryCategoryName", "$$lotteryCategoryName"] },
-                    { $eq: ["$subAdmin", subAdminId] },
+                    { $eq: ['$lotteryCategoryName', '$$lotteryCategoryName'] },
+                    { $eq: ['$date', '$$date'] },
                   ],
                 },
               },
             },
           ],
-          as: "paymentTerms",
+          as: 'winningNumbers',
         },
       },
       {
         $lookup: {
-          from: "winningnumbers",
-          let: { lotteryCategoryName: "$lotteryCategoryName", date: "$date" },
-          pipeline: [
-            {
-              $match: {
-                $expr: {
-                  $and: query,
-                },
-              },
-            },
-          ],
-          as: "winningNumbers",
-        },
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "seller",
-          foreignField: "_id",
-          as: "sellerInfo",
+          from: 'users',
+          localField: 'seller',
+          foreignField: '_id',
+          as: 'sellerInfo',
         },
       },
       {
         $project: {
-          seller: {
-            $arrayElemAt: ["$sellerInfo.userName", 0],
-          },
-          ticketId: 1,
+          sellerId:   { $arrayElemAt: ['$sellerInfo._id',      0] },
+          sellerName: { $arrayElemAt: ['$sellerInfo.userName', 0] },
           date: 1,
           lotteryCategoryName: 1,
           numbers: 1,
           winningNumbers: 1,
-          paymentTerms: 1,
         },
       },
     ]);
@@ -105,21 +149,22 @@ exports.getSaleReports = async (req, res) => {
     const resultBySeller = {};
 
     result.forEach((item) => {
-      const sellerName = item.seller;
-      const numbers = item.numbers;
+      const sellerName = item.sellerName;
+      const numbers    = item.numbers;
+      let sumAmount    = 0;
+      let paidAmount   = 0;
 
-      let sumAmount = 0;
-      let paidAmount = 0;
+      // Always count sales amount (fix: was only counted when winning numbers existed)
+      numbers.forEach(n => { if (!n.bonus) sumAmount += n.amount; });
 
-      // sumAmount += numbers.reduce((total, value) => total + value.amount, 0);
-
-      if (item.winningNumbers.length !== 0 && item.paymentTerms.length !== 0) {
+      const payTerm = findPaymentTerm(item.sellerId, item.lotteryCategoryName, item.date);
+      if (item.winningNumbers.length !== 0 && payTerm) {
         const winnumbers = item.winningNumbers[0].numbers;
-        const payterms = item.paymentTerms[0].conditions;
+        const payterms   = payTerm.conditions;
         numbers.forEach((gameNumber) => {
           winnumbers.forEach((winNumber) => {
             if (
-              gameNumber.number === winNumber.number &&
+              gameNumber.number      === winNumber.number &&
               gameNumber.gameCategory === winNumber.gameCategory
             ) {
               payterms.forEach((term) => {
@@ -132,21 +177,13 @@ exports.getSaleReports = async (req, res) => {
               });
             }
           });
-
-          if(!gameNumber.bonus) {
-            sumAmount += gameNumber.amount;
-          }
         });
       }
 
       if (!resultBySeller[sellerName]) {
-        resultBySeller[sellerName] = {
-          name: sellerName,
-          sum: sumAmount,
-          paid: paidAmount,
-        };
+        resultBySeller[sellerName] = { name: sellerName, sum: sumAmount, paid: paidAmount };
       } else {
-        resultBySeller[sellerName].sum += sumAmount;
+        resultBySeller[sellerName].sum  += sumAmount;
         resultBySeller[sellerName].paid += paidAmount;
       }
     });
